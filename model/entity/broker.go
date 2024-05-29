@@ -1,7 +1,7 @@
 package entity
 
 type Broker struct {
-	Broker_Code string `gorm:"type:char(2);primary_key"`
+	Broker_Code string `gorm:"type:char(2);primaryKey"`
 	Broker_Name string `gorm:"type:VARCHAR(41)"`
 
 	// Relationship
