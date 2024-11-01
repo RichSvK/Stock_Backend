@@ -19,8 +19,24 @@ func NewBalanceRepository() BalanceRepository {
 
 func (repository *BalanceRepositoryImpl) Create(ctx context.Context, stock []entity.Stock) error {
 	db := config.GetDatabaseInstance()
-	err := db.WithContext(ctx).Model(&entity.Stock{}).Create(&stock).Error
-	return err
+	tx := db.WithContext(ctx).Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Create(&stock).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	return nil
 }
 
 func (repository *BalanceRepositoryImpl) GetBalanceStock(ctx context.Context, code string) ([]entity.Stock, error) {

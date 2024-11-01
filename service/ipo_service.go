@@ -2,10 +2,10 @@ package service
 
 import (
 	"backend/helper"
+	"backend/model/web/request"
 	"backend/repository"
 	"context"
 	"fmt"
-	"net/http"
 	"strconv"
 )
 
@@ -13,6 +13,7 @@ type IpoService interface {
 	GetIpoAll(ctx context.Context) (int, interface{})
 	GetIpoByUnderwriter(ctx context.Context, underwriter string) (int, interface{})
 	GetIpoByValue(ctx context.Context, value string, underwriter string) (int, interface{})
+	GetIpoByCondition(ctx context.Context, request []request.Filter) (int, interface{})
 }
 
 type IpoServiceImpl struct {
@@ -28,43 +29,57 @@ func NewIpoService(repositoryIPO repository.IpoRepository) IpoService {
 func (service *IpoServiceImpl) GetIpoAll(ctx context.Context) (int, interface{}) {
 	listIPO, err := service.IpoRepository.GetAllIpo(ctx)
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, "Failed to get IPO data")
+		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
 	}
 
 	if len(listIPO) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, "IPO data not found")
+		return 404, helper.ToFailedResponse(404, "IPO data not found")
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, "IPO data found", helper.ToIpoResponses(listIPO))
+	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
 }
 
 func (service *IpoServiceImpl) GetIpoByUnderwriter(ctx context.Context, underwriter string) (int, interface{}) {
 	listIPO, err := service.IpoRepository.FindByUnderwriter(ctx, underwriter)
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, "Failed to get IPO data")
+		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
 	}
 
 	if len(listIPO) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, fmt.Sprintf("IPO data with %s underwriter not found", underwriter))
+		return 404, helper.ToFailedResponse(404, fmt.Sprintf("IPO data with %s underwriter not found", underwriter))
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, "IPO data found", helper.ToIpoResponses(listIPO))
+	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
 }
 
 func (service *IpoServiceImpl) GetIpoByValue(ctx context.Context, value string, underwriter string) (int, interface{}) {
 	values, err := strconv.Atoi(value)
 	if err != nil {
-		return http.StatusBadRequest, helper.ToFailedResponse(http.StatusBadRequest, "Bad Request")
+		return 400, helper.ToFailedResponse(400, "Bad Request")
 	}
 
 	listIPO, err := service.IpoRepository.FindByValue(ctx, values, underwriter)
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, "Failed to get IPO data")
+		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
 	}
 
 	if len(listIPO) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, fmt.Sprintf("IPO data with %s value not found", value))
+		return 404, helper.ToFailedResponse(404, fmt.Sprintf("IPO data with %s value not found", value))
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, "IPO data found", helper.ToIpoResponses(listIPO))
+	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
+}
+
+func (service *IpoServiceImpl) GetIpoByCondition(ctx context.Context, request []request.Filter) (int, interface{}) {
+	listIPO, err := service.IpoRepository.FindByCondition(ctx, request)
+	fmt.Printf("HELLO Service")
+	if err != nil {
+		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
+	}
+
+	if len(listIPO) == 0 {
+		return 404, helper.ToFailedResponse(404, "IPO data not found")
+	}
+
+	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
 }

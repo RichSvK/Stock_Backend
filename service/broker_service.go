@@ -4,7 +4,6 @@ import (
 	"backend/helper"
 	"backend/repository"
 	"context"
-	"net/http"
 )
 
 type BrokerService interface {
@@ -24,12 +23,12 @@ func NewBrokerService(repositoryBroker repository.BrokerRepository) BrokerServic
 func (service *BrokerServiceImpl) GetBrokers(ctx context.Context) (int, interface{}) {
 	listBroker, err := service.BrokerRepository.GetBrokers(ctx)
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, "Failed to get broker data")
+		return 500, helper.ToFailedResponse(500, "Failed to get broker data")
 	}
 
 	if len(listBroker) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, "Broker data not found")
+		return 404, helper.ToFailedResponse(404, "Broker data not found")
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, "Broker data found", helper.ToBrokerResponses(listBroker))
+	return 200, helper.ToWebResponse(200, "Broker data found", helper.ToBrokerResponses(listBroker))
 }

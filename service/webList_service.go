@@ -4,7 +4,6 @@ import (
 	"backend/helper"
 	"backend/repository"
 	"context"
-	"net/http"
 )
 
 type StockWebService interface {
@@ -26,26 +25,26 @@ func (service *StockWebServiceImpl) GetLinkReference(ctx context.Context, catego
 	listLink, err := service.StockWebRepository.GetLinks(ctx, categoryID)
 
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, "Failed to get link data")
+		return 500, helper.ToFailedResponse(500, "Failed to get link data")
 	}
 
 	if len(listLink) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, "Link not found")
+		return 404, helper.ToFailedResponse(404, "Link not found")
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, "Link was found", listLink)
+	return 200, helper.ToWebResponse(200, "Link was found", listLink)
 }
 
 func (service *StockWebServiceImpl) GetLinks(ctx context.Context) (int, interface{}) {
 	listLink, err := service.StockWebRepository.GetLinks(ctx, "")
 
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, "Failed to get link data")
+		return 500, helper.ToFailedResponse(500, "Failed to get link data")
 	}
 
 	if len(listLink) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, "Link not found")
+		return 404, helper.ToFailedResponse(404, "Link not found")
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, "Link was found", listLink)
+	return 200, helper.ToWebResponse(200, "Link was found", listLink)
 }

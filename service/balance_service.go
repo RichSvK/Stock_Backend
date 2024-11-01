@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -34,7 +33,7 @@ func NewBalanceService(repositoryBalance repository.BalanceRepository) BalanceSe
 func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) (int, interface{}) {
 	file, err := os.OpenFile("Resource\\"+fileName, os.O_RDONLY, 0444)
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 	defer file.Close()
 
@@ -42,7 +41,7 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 	_, _, err = reader.ReadLine()
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
 	var rowsData []byte = nil
@@ -66,12 +65,12 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 		stock.Date, err = time.Parse(dateFormatter, string(stockData[0]))
 		if err != nil {
-			return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+			return 500, helper.ToFailedResponse(500, err.Error())
 		}
 
 		stock.Date, err = time.Parse("02-01-2006", stock.Date.Format("02-01-2006"))
 		if err != nil {
-			return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+			return 500, helper.ToFailedResponse(500, err.Error())
 		}
 
 		stock.Code = string(stockData[1])
@@ -101,41 +100,41 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 	err = service.BalanceRepository.Create(ctx, listStock)
 	if err != nil {
 		fmt.Println(err.Error())
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
-	return http.StatusCreated, helper.ToWebResponse(http.StatusCreated, "Success insert data", nil)
+	return 201, helper.ToWebResponse(201, "Success insert data", nil)
 }
 
 func (service *BalanceServiceImpl) ExportCode(ctx context.Context, code string) (int, interface{}) {
 	listStock, err := service.BalanceRepository.GetBalanceStock(ctx, code)
 
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
 	if len(listStock) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, fmt.Sprintf("Stock %s Not Found", code))
+		return 404, helper.ToFailedResponse(404, fmt.Sprintf("Stock %s Not Found", code))
 	}
 
 	err = helper.MakeCSV(code, listStock)
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, "Success export data", nil)
+	return 200, helper.ToWebResponse(200, "Success export data", nil)
 }
 
 func (service *BalanceServiceImpl) GetBalanceData(ctx context.Context, code string) (int, interface{}) {
 	listBalance, err := service.BalanceRepository.GetBalanceStock(ctx, code)
 	helper.PanicIfError(err)
 	if err != nil {
-		return http.StatusInternalServerError, helper.ToFailedResponse(http.StatusInternalServerError, err.Error())
+		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
 	if len(listBalance) == 0 {
-		return http.StatusNotFound, helper.ToFailedResponse(http.StatusNotFound, fmt.Sprintf("%s was not found", code))
+		return 404, helper.ToFailedResponse(404, fmt.Sprintf("%s was not found", code))
 	}
 
-	return http.StatusOK, helper.ToWebResponse(http.StatusOK, fmt.Sprintf("%s data found", code), helper.ToBalanceResponses(listBalance))
+	return 200, helper.ToWebResponse(200, fmt.Sprintf("%s data found", code), helper.ToBalanceResponses(listBalance))
 }

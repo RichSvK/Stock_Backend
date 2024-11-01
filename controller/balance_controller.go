@@ -35,13 +35,13 @@ func (controller *BalanceControllerImpl) Upload(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, output.FailedResponse{})
+		c.JSON(400, output.FailedResponse{})
 		return
 	}
 
 	filePath := filepath.Join("Resource", file.Filename)
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error saving the file"})
+		c.JSON(500, gin.H{"error": "Error saving the file"})
 		return
 	}
 
@@ -57,7 +57,7 @@ func (controller *BalanceControllerImpl) ExportBalanceController(c *gin.Context)
 
 	stockCode := c.Query("code")
 	status, output := controller.BalanceService.ExportCode(ctx, stockCode)
-	if status != http.StatusOK {
+	if status != 200 {
 		c.Header("Content-Type", "application/json")
 		c.JSON(status, output)
 		return

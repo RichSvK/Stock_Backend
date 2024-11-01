@@ -45,6 +45,7 @@ func IpoRoute(router *gin.Engine) {
 	router.GET("/ipo", ipoController.GetAllIpo)
 	router.GET("/ipo/value", ipoController.GetIpoByValue)
 	router.GET("/ipo/underwriter/:underwriter", ipoController.GetIpoByUnderwriter)
+	router.POST("/ipo/condition", ipoController.GetIpoByCondition)
 }
 
 func BrokerRoute(router *gin.Engine) {
