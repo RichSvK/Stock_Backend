@@ -6,10 +6,13 @@ import (
 	"backend/route"
 )
 
-func main() {
+func init() {
 	config.InitEnvironment()
 	config.InitializeDBConnection()
 	config.MakeFolder("Resource")
+}
+
+func main() {
 	db := config.GetDatabaseInstance()
 	db.AutoMigrate(&entity.StockIPO{}, &entity.Broker{}, &entity.IPO_Detail{}, &entity.Stock{}, &entity.Category{}, &entity.Link{})
 	router := route.SetupRouter()
