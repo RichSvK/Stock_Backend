@@ -35,7 +35,10 @@ func (controller *BalanceControllerImpl) Upload(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(400, output.FailedResponse{})
+		c.JSON(400, output.FailedResponse{
+			Code:    400,
+			Message: "No file uploaded",
+		})
 		return
 	}
 
