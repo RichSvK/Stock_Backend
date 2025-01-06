@@ -1,7 +1,8 @@
 package entity
 
 type Link struct {
-	URL         string `json:"web_url_link" gorm:"type:TEXT;column:url_link;primaryKey"`
+	ID          int    `gorm:"column:id;type:INT;primaryKey"`
+	URL         string `json:"web_url_link" gorm:"type:TEXT;column:url_link"`
 	Name        string `json:"web_name" gorm:"type:VARCHAR(50);column:web_name;not null"`
 	Image       string `json:"web_image" gorm:"type:TEXT;column:web_image;not null"`
 	Description string `json:"web_description" gorm:"type:TEXT;column:web_description;not null"`
