@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +32,8 @@ func NewBalanceService(repositoryBalance repository.BalanceRepository) BalanceSe
 }
 
 func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) (int, interface{}) {
-	file, err := os.OpenFile("Resource\\"+fileName, os.O_RDONLY, 0444)
+	var path = filepath.Join("Resource", fileName)
+	file, err := os.OpenFile(path, os.O_RDONLY, 0444)
 	if err != nil {
 		return 500, helper.ToFailedResponse(500, err.Error())
 	}
