@@ -5,6 +5,7 @@ import "time"
 type Stock struct {
 	Date      time.Time `json:"date" gorm:"type:DATE;primaryKey"`
 	Code      string    `json:"code" gorm:"type:CHAR(4);primaryKey"`
+	ListedShares uint64	`json:"listed_shares" gorm:"type: BIGINT UNSIGNED"`
 	LocalIS   uint64    `json:"local_is" gorm:"type:BIGINT UNSIGNED"`
 	LocalCP   uint64    `json:"local_cp" gorm:"type:BIGINT UNSIGNED"`
 	LocalPF   uint64    `json:"local_pf" gorm:"type:BIGINT UNSIGNED"`
