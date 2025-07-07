@@ -4,11 +4,13 @@ import (
 	"backend/config"
 	"backend/model/entity"
 	"context"
+	"time"
 )
 
 type BalanceRepository interface {
 	Create(ctx context.Context, stock []entity.Stock) error
 	GetBalanceStock(ctx context.Context, code string) ([]entity.Stock, error)
+	GetScriptlessChange(ctx context.Context, startDate time.Time, endDate time.Time) ([]entity.Stock, error)
 }
 
 type BalanceRepositoryImpl struct{}
@@ -49,6 +51,27 @@ func (repository *BalanceRepositoryImpl) GetBalanceStock(ctx context.Context, co
 		Where("code = ?", code).
 		Order("Date DESC").
 		Limit(6).
+		Scan(&listStock).
+		Error
+
+	return listStock, err
+}
+
+func (repository *BalanceRepositoryImpl) GetScriptlessChange(ctx context.Context, startDate time.Time, endDate time.Time) ([]entity.Stock, error) {
+	db := config.GetDatabaseInstance()
+
+	var listStock []entity.Stock
+	startMonth := int(startDate.Month())
+	startYear := startDate.Year()
+	endMonth := int(endDate.Month())
+	endYear := endDate.Year()
+
+	err := db.WithContext(ctx).
+		Model(&entity.Stock{}).
+		Select("stock.*").
+		Where("(MONTH(date) = ? AND YEAR(date) = ?) OR (MONTH(date) = ? AND YEAR(date) = ?)", startMonth, startYear, endMonth, endYear).
+		Order("code ASC").
+		Order("Date ASC").
 		Scan(&listStock).
 		Error
 

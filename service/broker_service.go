@@ -7,7 +7,7 @@ import (
 )
 
 type BrokerService interface {
-	GetBrokers(ctx context.Context) (int, interface{})
+	GetBrokers(ctx context.Context) (int, any)
 }
 
 type BrokerServiceImpl struct {
@@ -20,7 +20,7 @@ func NewBrokerService(repositoryBroker repository.BrokerRepository) BrokerServic
 	}
 }
 
-func (service *BrokerServiceImpl) GetBrokers(ctx context.Context) (int, interface{}) {
+func (service *BrokerServiceImpl) GetBrokers(ctx context.Context) (int, any) {
 	listBroker, err := service.BrokerRepository.GetBrokers(ctx)
 	if err != nil {
 		return 500, helper.ToFailedResponse(500, "Failed to get broker data")

@@ -3,6 +3,7 @@ package service
 import (
 	"backend/helper"
 	"backend/model/entity"
+	"backend/model/web/response"
 	"backend/repository"
 	"bufio"
 	"context"
@@ -10,15 +11,17 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type BalanceService interface {
-	Create(ctx context.Context, fileName string) (int, interface{})
-	ExportCode(ctx context.Context, code string) (int, interface{})
-	GetBalanceData(ctx context.Context, code string) (int, interface{})
+	Create(ctx context.Context, fileName string) (int, any)
+	ExportCode(ctx context.Context, code string) (int, any)
+	GetBalanceData(ctx context.Context, code string) (int, any)
+	GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (int, any)
 }
 
 type BalanceServiceImpl struct {
@@ -31,7 +34,7 @@ func NewBalanceService(repositoryBalance repository.BalanceRepository) BalanceSe
 	}
 }
 
-func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) (int, interface{}) {
+func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) (int, any) {
 	var path = filepath.Join("Resource", fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0444)
 	if err != nil {
@@ -110,7 +113,7 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 	return 201, helper.ToWebResponse(201, "Success insert data", nil)
 }
 
-func (service *BalanceServiceImpl) ExportCode(ctx context.Context, code string) (int, interface{}) {
+func (service *BalanceServiceImpl) ExportCode(ctx context.Context, code string) (int, any) {
 	listStock, err := service.BalanceRepository.GetBalanceStock(ctx, code)
 
 	if err != nil {
@@ -129,7 +132,7 @@ func (service *BalanceServiceImpl) ExportCode(ctx context.Context, code string) 
 	return 200, helper.ToWebResponse(200, "Success export data", nil)
 }
 
-func (service *BalanceServiceImpl) GetBalanceData(ctx context.Context, code string) (int, interface{}) {
+func (service *BalanceServiceImpl) GetBalanceData(ctx context.Context, code string) (int, any) {
 	listBalance, err := service.BalanceRepository.GetBalanceStock(ctx, code)
 	helper.PanicIfError(err)
 	if err != nil {
@@ -141,4 +144,60 @@ func (service *BalanceServiceImpl) GetBalanceData(ctx context.Context, code stri
 	}
 
 	return 200, helper.ToWebResponse(200, fmt.Sprintf("%s data found", code), helper.ToBalanceResponses(listBalance))
+}
+
+func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (int, any) {
+	listStock, err := service.BalanceRepository.GetScriptlessChange(ctx, startTime, endTime)
+	if err != nil {
+		return 500, helper.ToFailedResponse(500, err.Error())
+	}
+
+	fmt.Println(startTime)
+	var count int = len(listStock)
+	if count == 0 {
+		return 404, helper.ToFailedResponse(404, "Scriptless data not found")
+	}
+
+	var listResponseChange []response.ScriptlessResponse
+	var stock response.ScriptlessResponse = response.ScriptlessResponse{}
+	for i := 0; i < count; i++ {
+		stock = response.ScriptlessResponse{}
+
+		if i < count-1 && listStock[i].Code == listStock[i+1].Code {
+			stock.Code = listStock[i].Code
+			stock.FirstShare = TotalShares(listStock[i])
+			stock.SecondShare = TotalShares(listStock[i+1])
+			stock.FirstListedShares = listStock[i].ListedShares
+			stock.SecondListedShares = listStock[i+1].ListedShares
+			stock.Change = int64(stock.SecondShare) - int64(stock.FirstShare)
+			stock.ChangePercentage = float64(stock.Change) / float64(stock.FirstShare) * 100
+
+			if stock.Change != 0 {
+				listResponseChange = append(listResponseChange, stock)
+			}
+			i++
+		} else {
+			stock.Code = listStock[i].Code
+			stock.FirstShare = 0
+			stock.FirstListedShares = 0
+			stock.SecondShare = TotalShares(listStock[i])
+			stock.SecondListedShares = listStock[i].ListedShares
+			stock.Change = int64(stock.SecondShare)
+			stock.ChangePercentage = 100
+			listResponseChange = append(listResponseChange, stock)
+		}
+
+	}
+
+	sort.Slice(listResponseChange, func(i, j int) bool {
+		return listResponseChange[i].ChangePercentage > listResponseChange[j].ChangePercentage
+	})
+
+	return 200, helper.ToWebResponse(200, "Scriptless data change found", listResponseChange)
+}
+
+func TotalShares(s entity.Stock) uint64 {
+	return s.LocalIS + s.LocalCP + s.LocalPF + s.LocalIB + s.LocalID + s.LocalMF +
+		s.LocalSC + s.LocalFD + s.LocalOT + s.ForeignIS + s.ForeignCP + s.ForeignPF +
+		s.ForeignIB + s.ForeignID + s.ForeignMF + s.ForeignSC + s.ForeignFD + s.ForeignOT
 }

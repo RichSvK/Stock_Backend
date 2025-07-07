@@ -10,10 +10,10 @@ import (
 )
 
 type IpoService interface {
-	GetIpoAll(ctx context.Context) (int, interface{})
-	GetIpoByUnderwriter(ctx context.Context, underwriter string) (int, interface{})
-	GetIpoByValue(ctx context.Context, value string, underwriter string) (int, interface{})
-	GetIpoByCondition(ctx context.Context, request []request.Filter) (int, interface{})
+	GetIpoAll(ctx context.Context) (int, any)
+	GetIpoByUnderwriter(ctx context.Context, underwriter string) (int, any)
+	GetIpoByValue(ctx context.Context, value string, underwriter string) (int, any)
+	GetIpoByCondition(ctx context.Context, request []request.Filter) (int, any)
 }
 
 type IpoServiceImpl struct {
@@ -26,7 +26,7 @@ func NewIpoService(repositoryIPO repository.IpoRepository) IpoService {
 	}
 }
 
-func (service *IpoServiceImpl) GetIpoAll(ctx context.Context) (int, interface{}) {
+func (service *IpoServiceImpl) GetIpoAll(ctx context.Context) (int, any) {
 	listIPO, err := service.IpoRepository.GetAllIpo(ctx)
 	if err != nil {
 		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
@@ -39,7 +39,7 @@ func (service *IpoServiceImpl) GetIpoAll(ctx context.Context) (int, interface{})
 	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
 }
 
-func (service *IpoServiceImpl) GetIpoByUnderwriter(ctx context.Context, underwriter string) (int, interface{}) {
+func (service *IpoServiceImpl) GetIpoByUnderwriter(ctx context.Context, underwriter string) (int, any) {
 	listIPO, err := service.IpoRepository.FindByUnderwriter(ctx, underwriter)
 	if err != nil {
 		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
@@ -52,7 +52,7 @@ func (service *IpoServiceImpl) GetIpoByUnderwriter(ctx context.Context, underwri
 	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
 }
 
-func (service *IpoServiceImpl) GetIpoByValue(ctx context.Context, value string, underwriter string) (int, interface{}) {
+func (service *IpoServiceImpl) GetIpoByValue(ctx context.Context, value string, underwriter string) (int, any) {
 	values, err := strconv.Atoi(value)
 	if err != nil {
 		return 400, helper.ToFailedResponse(400, "Bad Request")
@@ -70,7 +70,7 @@ func (service *IpoServiceImpl) GetIpoByValue(ctx context.Context, value string, 
 	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
 }
 
-func (service *IpoServiceImpl) GetIpoByCondition(ctx context.Context, request []request.Filter) (int, interface{}) {
+func (service *IpoServiceImpl) GetIpoByCondition(ctx context.Context, request []request.Filter) (int, any) {
 	listIPO, err := service.IpoRepository.FindByCondition(ctx, request)
 	fmt.Printf("HELLO Service")
 	if err != nil {

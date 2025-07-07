@@ -27,6 +27,7 @@ func BalanceRoute(router *gin.Engine) {
 	router.GET("/export", balanceController.ExportBalanceController)
 	router.GET("/balance/:code", balanceController.GetBalanceChart)
 	router.POST("/balance/upload", balanceController.Upload)
+	router.GET("/balance/scriptless", balanceController.GetScriptlessChange)
 }
 
 func StockWebRoute(router *gin.Engine) {

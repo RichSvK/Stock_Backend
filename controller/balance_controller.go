@@ -16,6 +16,7 @@ type BalanceController interface {
 	Upload(c *gin.Context)
 	ExportBalanceController(c *gin.Context)
 	GetBalanceChart(c *gin.Context)
+	GetScriptlessChange(c *gin.Context)
 }
 
 type BalanceControllerImpl struct {
@@ -78,5 +79,42 @@ func (controller *BalanceControllerImpl) GetBalanceChart(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second)
 	defer cancel()
 	status, output := controller.BalanceService.GetBalanceData(ctx, c.Param("code"))
+	c.JSON(status, output)
+}
+
+func (controller *BalanceControllerImpl) GetScriptlessChange(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
+	startTime := c.Query("start_time")
+	endTime := c.Query("end_time")
+
+	if startTime == "" || endTime == "" {
+		c.JSON(400, output.FailedResponse{
+			Code:    400,
+			Message: "Missing required parameters",
+		})
+		return
+	}
+
+	start, err := time.Parse("2006-01-02", startTime)
+	if err != nil {
+		c.JSON(400, output.FailedResponse{
+			Code:    400,
+			Message: "Invalid start time format",
+		})
+		return
+	}
+
+	end, err := time.Parse("2006-01-02", endTime)
+	if err != nil {
+		c.JSON(400, output.FailedResponse{
+			Code:    400,
+			Message: "Invalid end time format",
+		})
+		return
+	}
+
+	status, output := controller.BalanceService.GetScriptlessChange(ctx, start, end)
 	c.JSON(status, output)
 }
