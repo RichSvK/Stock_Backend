@@ -2,6 +2,7 @@ package route
 
 import (
 	"backend/controller"
+	"backend/middleware"
 	"backend/repository"
 	"backend/service"
 
@@ -25,7 +26,7 @@ func BalanceRoute(router *gin.Engine) {
 	balanceService := service.NewBalanceService(balanceRepository)
 	balanceController := controller.NewBalanceController(balanceService)
 	router.GET("/export", balanceController.ExportBalanceController)
-	router.GET("/balance/:code", balanceController.GetBalanceChart)
+	router.GET("/balance/:code", middleware.JWTMiddleware(), balanceController.GetBalanceChart)
 	router.POST("/balance/upload", balanceController.Upload)
 	router.GET("/balance/scriptless", balanceController.GetScriptlessChange)
 }
