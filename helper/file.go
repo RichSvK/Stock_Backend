@@ -26,8 +26,9 @@ func MakeCSV(code string, listStock []entity.Stock) error {
 
 	file.WriteString("Date,Code,Local IS,Local CP,Local PF,Local IB,Local ID,Local MF,Local SC,Local FD,Local OT,Foreign IS,Foreign CP,Foreign PF,Foreign IB,Foreign ID,Foreign MF,Foreign SC,Foreign FD,Foreign OT\n")
 
-	for _, stock := range listStock {
-		WriteStockData(file, &stock)
+	count := len(listStock)
+	for i := count - 1; i >= 0; i-- {
+		WriteStockData(file, &listStock[i])
 	}
 	return nil
 }
