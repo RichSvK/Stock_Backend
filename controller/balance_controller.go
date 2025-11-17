@@ -17,6 +17,7 @@ type BalanceController interface {
 	ExportBalanceController(c *gin.Context)
 	GetBalanceChart(c *gin.Context)
 	GetScriptlessChange(c *gin.Context)
+	GetBalanceChange(c *gin.Context)
 }
 
 type BalanceControllerImpl struct {
@@ -116,5 +117,17 @@ func (controller *BalanceControllerImpl) GetScriptlessChange(c *gin.Context) {
 	}
 
 	status, output := controller.BalanceService.GetScriptlessChange(ctx, start, end)
+	c.JSON(status, output)
+}
+
+func (controller *BalanceControllerImpl) GetBalanceChange(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
+	shareholderType := c.Query("type")
+	change := c.Query("change")
+	page := c.Query("page")
+
+	status, output := controller.BalanceService.GetBalanceChangeData(ctx, shareholderType, change, page)
 	c.JSON(status, output)
 }

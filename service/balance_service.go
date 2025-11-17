@@ -22,6 +22,7 @@ type BalanceService interface {
 	ExportCode(ctx context.Context, code string) (int, any)
 	GetBalanceData(ctx context.Context, code string) (int, any)
 	GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (int, any)
+	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string) (int, any)
 }
 
 type BalanceServiceImpl struct {
@@ -177,6 +178,7 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 			}
 			i++
 		} else {
+			// IPO Stock
 			stock.Code = listStock[i].Code
 			stock.FirstShare = 0
 			stock.FirstListedShares = 0
@@ -186,7 +188,6 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 			stock.ChangePercentage = 100
 			listResponseChange = append(listResponseChange, stock)
 		}
-
 	}
 
 	sort.Slice(listResponseChange, func(i, j int) bool {
@@ -200,4 +201,35 @@ func TotalShares(s entity.Stock) uint64 {
 	return s.LocalIS + s.LocalCP + s.LocalPF + s.LocalIB + s.LocalID + s.LocalMF +
 		s.LocalSC + s.LocalFD + s.LocalOT + s.ForeignIS + s.ForeignCP + s.ForeignPF +
 		s.ForeignIB + s.ForeignID + s.ForeignMF + s.ForeignSC + s.ForeignFD + s.ForeignOT
+}
+
+func (service *BalanceServiceImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string) (int, any) {
+	now := time.Now()
+	prevYM := now.AddDate(0, -1, 0).Format("2006-01")
+	prev2YM := now.AddDate(0, -2, 0).Format("2006-01")
+
+	listBalanceChange, err := service.BalanceRepository.GetBalanceChangeData(ctx, shareholderType, change, page, prev2YM, prevYM)
+
+	helper.PanicIfError(err)
+
+	if err != nil {
+		return 500, helper.ToFailedResponse(500, err.Error())
+	}
+
+	if len(listBalanceChange) == 0 {
+		return 404, helper.ToFailedResponse(404, "No balance change data found")
+	}
+
+	listBalanceChangeLen := len(listBalanceChange)
+
+	if listBalanceChangeLen == 11 {
+		listBalanceChange = listBalanceChange[:10]
+	}
+
+	response := response.BalanceChangesResponse{
+		HaveNext: listBalanceChangeLen == 11,
+		Data:     listBalanceChange,
+	}
+
+	return 200, response
 }

@@ -24,3 +24,15 @@ type BalanceResponse struct {
 	ForeignFD    uint64    `json:"foreign_fd"`
 	ForeignOT    uint64    `json:"foreign_ot"`
 }
+
+type BalanceChangesResponse struct {
+	HaveNext bool                `json:"have_next"`
+	Data     []BalanceChangeData `json:"data"`
+}
+
+type BalanceChangeData struct {
+	StockCode         string  `json:"stock_code"`
+	PreviousOwnership uint64  `json:"previous_ownership"`
+	CurrentOwnership  uint64  `json:"current_ownership"`
+	ChangePercentage  float64 `json:"change_percentage"`
+}

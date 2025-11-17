@@ -15,5 +15,6 @@ func BalanceRoute(router *gin.Engine) {
 	router.GET("/export", balanceController.ExportBalanceController)
 	router.GET("/balance/:code", balanceController.GetBalanceChart)
 	router.POST("/balance/upload", balanceController.Upload)
-	router.GET("/balance/scriptless", balanceController.GetScriptlessChange)
+	router.GET("/api/auth/balance/scriptless", balanceController.GetScriptlessChange)
+	router.GET("/api/balance/change", balanceController.GetBalanceChange)
 }
