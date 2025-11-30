@@ -41,7 +41,12 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 	if err != nil {
 		return 500, helper.ToFailedResponse(500, err.Error())
 	}
-	defer file.Close()
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Println("Error closing file:", err)
+		}
+	}()
 
 	reader := bufio.NewReader(file)
 
@@ -50,7 +55,7 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
-	var rowsData []byte = nil
+	var rowsData []byte
 	var listStock []entity.Stock = nil
 	var stock = entity.Stock{}
 	dateFormatter := "02-Jan-2006"
@@ -153,14 +158,13 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
-	fmt.Println(startTime)
-	var count int = len(listStock)
+	count := len(listStock)
 	if count == 0 {
 		return 404, helper.ToFailedResponse(404, "Scriptless data not found")
 	}
 
 	var listResponseChange []response.ScriptlessResponse
-	var stock response.ScriptlessResponse = response.ScriptlessResponse{}
+	stock := response.ScriptlessResponse{}
 	for i := 0; i < count; i++ {
 		stock = response.ScriptlessResponse{}
 

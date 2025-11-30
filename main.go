@@ -4,6 +4,7 @@ import (
 	"backend/config"
 	"backend/model/entity"
 	"backend/route"
+	"log"
 )
 
 func init() {
@@ -14,7 +15,23 @@ func init() {
 
 func main() {
 	db := config.GetDatabaseInstance()
-	db.AutoMigrate(&entity.StockIPO{}, &entity.Broker{}, &entity.IPO_Detail{}, &entity.Stock{}, &entity.Category{}, &entity.Link{})
+
+	// AutoMigrate
+	if err := db.AutoMigrate(
+		&entity.StockIPO{},
+		&entity.Broker{},
+		&entity.IPO_Detail{},
+		&entity.Stock{},
+		&entity.Category{},
+		&entity.Link{},
+	); err != nil {
+		log.Fatalf("migration failed: %v", err)
+	}
+
 	router := route.SetupRouter()
-	router.Run(":8080")
+
+	// Run the server
+	if err := router.Run(":8080"); err != nil {
+		log.Fatalf("failed to start server: %v", err)
+	}
 }

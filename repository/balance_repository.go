@@ -119,44 +119,46 @@ func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Contex
 	}
 
 	quotedCol := quoteIdent(shareholderType)
+	prevCol := "prev_" + shareholderType
+
 	const pageSize = 11
-	var offset int = 0
+	var offset int
 	if page != "" {
 		if pNum, err := strconv.Atoi(page); err == nil && pNum > 0 {
 			offset = (pNum - 1) * (pageSize - 1)
 		}
 	}
 
-	query := ""
+	var changeExpr string
+	var whereCond string
 	if change == "Decrease" {
-		query = fmt.Sprintf(`
-		SELECT t.code as stock_code, t.%[1]s as current_ownership, t.prev_%[2]s as previous_ownership, ((t.prev_%[2]s - t.%[1]s) / t.prev_%[2]s * 100) AS change_percentage
-		FROM (
-			SELECT
-				s.*,
-				LAG(s.%[1]s) OVER (PARTITION BY s.code ORDER BY s.date) AS prev_%[2]s
-			FROM stock s
-			WHERE DATE_FORMAT(s.date, '%%Y-%%m') IN (?, ?)
-		) t
-		WHERE t.prev_%[2]s IS NOT NULL AND t.%[1]s < t.prev_%[2]s
-		ORDER BY change_percentage DESC, t.code
-		LIMIT ? OFFSET ?;`,
-			quotedCol, shareholderType)
+		changeExpr = fmt.Sprintf(
+			`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[2]s - t.%[1]s) / t.%[2]s * 100) END`,
+			quotedCol, prevCol)
+		whereCond = fmt.Sprintf("t.%s < t.%s", quotedCol, prevCol)
 	} else {
-		query = fmt.Sprintf(`
-		SELECT t.code as stock_code, t.%[1]s as current_ownership, t.prev_%[2]s as previous_ownership, ((t.%[1]s - t.prev_%[2]s) / t.prev_%[2]s * 100) AS change_percentage
+		changeExpr = fmt.Sprintf(
+			`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[1]s - t.%[2]s) / t.%[2]s * 100) END`,
+			quotedCol, prevCol)
+		whereCond = fmt.Sprintf("t.%s > t.%s", quotedCol, prevCol)
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			t.code AS stock_code,
+			t.%[1]s AS current_ownership,
+			t.%[2]s AS previous_ownership,
+			%[3]s AS change_percentage
 		FROM (
 			SELECT
 				s.*,
-				LAG(s.%[1]s) OVER (PARTITION BY s.code ORDER BY s.date) AS prev_%[2]s
+				LAG(s.%[1]s) OVER (PARTITION BY s.code ORDER BY s.date) AS %[2]s
 			FROM stock s
 			WHERE DATE_FORMAT(s.date, '%%Y-%%m') IN (?, ?)
 		) t
-		WHERE t.prev_%[2]s IS NOT NULL AND t.%[1]s > t.prev_%[2]s
+		WHERE t.%[2]s IS NOT NULL AND %[4]s
 		ORDER BY change_percentage DESC, t.code
-		LIMIT ? OFFSET ?;`,
-			quotedCol, shareholderType)
-	}
+		LIMIT ? OFFSET ?;`, quotedCol, prevCol, changeExpr, whereCond)
 
 	if err := db.WithContext(ctx).
 		Raw(query, startDate, endDate, pageSize, offset).

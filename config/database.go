@@ -17,8 +17,7 @@ var SqlDB *sql.DB = nil
 
 func InitializeDBConnection() {
 	dsn := os.Getenv("DB_URL")
-	fmt.Println(dsn)
-	var err error = nil
+	var err error
 
 	PoolDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger:                 logger.Default.LogMode(logger.Info),

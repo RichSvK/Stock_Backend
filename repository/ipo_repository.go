@@ -25,7 +25,7 @@ func NewIpoRepository() IpoRepository {
 
 func (repository *IpoRepositoryImpl) GetAllIpo(ctx context.Context) ([]entity.Ipo, error) {
 	var listStock []entity.Ipo = nil
-	var err error = nil
+	var err error
 	db := config.GetDatabaseInstance()
 	query := "id.stock_code AS stock_code, price, ipo_shares, listed_shares, equity, warrant, nominal, mcb, is_affiliated, is_acceleration, is_new, lock_up, subscribed_stock, GROUP_CONCAT(uw_code) AS all_underwriter, GROUP_CONCAT(uw_shares) AS all_shares, (price * ipo_shares) AS amount"
 	err = db.Table("ipo_detail id").

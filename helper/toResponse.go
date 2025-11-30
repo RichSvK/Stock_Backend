@@ -86,15 +86,14 @@ func ToIpoResponse(ipo entity.Ipo) response.IpoResponse {
 	underwriter := strings.Split(ipo.AllUnderwriter, ",")
 	uwShares := strings.Split(ipo.AllShares, ",")
 	size := len(underwriter) - 1
-	var percentage float64 = 0
 
 	for i := 0; i < size; i++ {
 		share, _ := strconv.ParseFloat(uwShares[i], 64)
-		percentage = share / float64(ipo.IPO_Shares) * 100
+		percentage := share / float64(ipo.IPO_Shares) * 100
 		responseIpo.AllUnderwriter += fmt.Sprintf("%s : %.2f%%, ", underwriter[i], percentage)
 	}
 	share, _ := strconv.ParseFloat(uwShares[size], 64)
-	percentage = share / float64(ipo.IPO_Shares) * 100
+	percentage := share / float64(ipo.IPO_Shares) * 100
 	responseIpo.AllUnderwriter += fmt.Sprintf("%s : %.2f%%}", underwriter[size], percentage)
 
 	return responseIpo
