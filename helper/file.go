@@ -14,7 +14,6 @@ func RemoveFile(filePath string) error {
 		log.Printf("Failed to delete %s\n", filePath)
 		return err
 	}
-	log.Printf("File %s telah dihapus\n", filePath)
 	return nil
 }
 

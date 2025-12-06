@@ -19,7 +19,8 @@ func InitializeDBConnection() {
 	var err error
 
 	PoolDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger:                 logger.Default.LogMode(logger.Info),
+		// Logger:                 logger.Default.LogMode(logger.Info), // Use for debug
+		Logger:                 logger.Default.LogMode(logger.Silent),
 		PrepareStmt:            true,
 		SkipDefaultTransaction: true,
 	})
