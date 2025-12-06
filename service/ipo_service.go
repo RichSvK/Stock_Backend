@@ -72,7 +72,7 @@ func (service *IpoServiceImpl) GetIpoByValue(ctx context.Context, value string, 
 
 func (service *IpoServiceImpl) GetIpoByCondition(ctx context.Context, request []request.Filter) (int, any) {
 	listIPO, err := service.IpoRepository.FindByCondition(ctx, request)
-	fmt.Printf("HELLO Service")
+
 	if err != nil {
 		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
 	}

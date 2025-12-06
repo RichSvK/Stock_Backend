@@ -59,6 +59,7 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 	var listStock []entity.Stock = nil
 	var stock = entity.Stock{}
 	dateFormatter := "02-Jan-2006"
+
 	for {
 		rowsData, _, err = reader.ReadLine()
 		if err == io.EOF {
@@ -112,7 +113,6 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 	err = service.BalanceRepository.Create(ctx, listStock)
 	if err != nil {
-		fmt.Println(err.Error())
 		return 500, helper.ToFailedResponse(500, err.Error())
 	}
 
@@ -182,14 +182,25 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 			}
 			i++
 		} else {
-			// IPO Stock
 			stock.Code = listStock[i].Code
-			stock.FirstShare = 0
-			stock.FirstListedShares = 0
-			stock.SecondShare = TotalShares(listStock[i])
-			stock.SecondListedShares = listStock[i].ListedShares
-			stock.Change = int64(stock.SecondShare)
-			stock.ChangePercentage = 100
+
+			if listStock[i].Date.Month() != startTime.Month() {
+				// IPO Stock
+				stock.FirstShare = 0
+				stock.FirstListedShares = 0
+				stock.SecondShare = TotalShares(listStock[i])
+				stock.SecondListedShares = listStock[i].ListedShares
+				stock.Change = int64(stock.SecondShare)
+				stock.ChangePercentage = 100
+			} else {
+				// Delisted Stock
+				stock.FirstShare = TotalShares(listStock[i])
+				stock.FirstListedShares = listStock[i].ListedShares
+				stock.SecondShare = 0
+				stock.SecondListedShares = 0
+				stock.Change = -int64(stock.FirstShare)
+				stock.ChangePercentage = -100
+			}
 			listResponseChange = append(listResponseChange, stock)
 		}
 	}

@@ -2,7 +2,6 @@ package config
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -43,7 +42,6 @@ func InitializeDBConnection() {
 	SqlDB.SetMaxOpenConns(10)
 	SqlDB.SetConnMaxIdleTime(10 * time.Second)
 	SqlDB.SetConnMaxLifetime(20 * time.Second)
-	fmt.Println("Success Make Connection")
 }
 
 func GetDatabaseInstance() *gorm.DB {

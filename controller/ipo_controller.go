@@ -4,7 +4,6 @@ import (
 	"backend/model/web/request"
 	"backend/service"
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -50,7 +49,6 @@ func (controller *IpoControllerImpl) GetIpoByValue(c *gin.Context) {
 
 func (controller *IpoControllerImpl) GetIpoByCondition(c *gin.Context) {
 	var request []request.Filter = nil
-	fmt.Printf("HELLO Controller")
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
