@@ -2,7 +2,9 @@ package config
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"time"
 
@@ -15,8 +17,21 @@ var PoolDB *gorm.DB = nil
 var SqlDB *sql.DB = nil
 
 func InitializeDBConnection() {
-	dsn := os.Getenv("DB_URL")
 	var err error
+
+	dbUser := os.Getenv("DB_USER")
+	dbPass := url.QueryEscape(os.Getenv("DB_PASSWORD"))
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=True",
+		dbUser,
+		dbPass,
+		dbHost,
+		dbPort,
+		dbName,
+	)
 
 	PoolDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		// Logger:                 logger.Default.LogMode(logger.Info), // Use for debug

@@ -31,7 +31,7 @@ func NewBalanceController(balanceService service.BalanceService) BalanceControll
 }
 
 func (controller *BalanceControllerImpl) Upload(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10<<20) // 10 MB
 
@@ -57,7 +57,7 @@ func (controller *BalanceControllerImpl) Upload(c *gin.Context) {
 }
 
 func (controller *BalanceControllerImpl) ExportBalanceController(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
 	stockCode := c.Query("code")
@@ -77,7 +77,7 @@ func (controller *BalanceControllerImpl) ExportBalanceController(c *gin.Context)
 }
 
 func (controller *BalanceControllerImpl) GetBalanceChart(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
 	status, output := controller.BalanceService.GetBalanceData(ctx, c.Param("code"))
 	c.JSON(status, output)

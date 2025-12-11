@@ -5,15 +5,16 @@ import (
 	"backend/model/entity"
 	"backend/route"
 	"log"
+	"os"
 )
 
-func init() {
-	config.InitEnvironment()
+func main() {
+	// Initialize local environment variables
+	// config.InitEnvironment()
+
 	config.InitializeDBConnection()
 	config.MakeFolder("Resource")
-}
 
-func main() {
 	db := config.GetDatabaseInstance()
 
 	// AutoMigrate
@@ -30,8 +31,13 @@ func main() {
 
 	router := route.SetupRouter()
 
-	// Run the server
-	if err := router.Run(":8080"); err != nil {
+	// Use PORT env or default to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
 }
