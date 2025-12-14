@@ -10,3 +10,8 @@ type FailedResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
+
+type SuccessResponse struct {
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}

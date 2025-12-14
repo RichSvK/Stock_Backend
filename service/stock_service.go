@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/helper"
+	"backend/model/web/output"
 	"backend/repository"
 	"context"
 )
@@ -30,5 +31,8 @@ func (service *StockServiceImpl) SearchStock(ctx context.Context, code string) (
 		return 404, "Stock not found"
 	}
 
-	return 200, helper.ToSearchStockResponses(listStock)
+	return 200, output.SuccessResponse{
+		Message: "Stock found",
+		Data:    helper.ToSearchStockResponses(listStock).Data,
+	}
 }

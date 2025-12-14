@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Initialize local environment variables
-	// config.InitEnvironment()
+	config.InitEnvironment()
 
 	config.InitializeDBConnection()
 	config.MakeFolder("Resource")
