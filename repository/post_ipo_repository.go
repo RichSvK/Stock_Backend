@@ -21,6 +21,7 @@ func (repository *PostIpoRepositoryImpl) GetBalanceFilter(ctx context.Context, c
 		Select("code, local_is, local_cp, local_pf, local_ib, local_id, local_mf, local_sc, local_fd, local_ot, foreign_is, foreign_cp, foreign_pf, foreign_ib, foreign_id, foreign_mf, foreign_sc, foreign_fd, foreign_ot, GREATEST(local_is, local_cp, local_pf, local_ib, local_id, local_mf, local_sc, local_fd, local_ot, foreign_is, foreign_cp, foreign_pf, foreign_ib, foreign_id, foreign_mf, foreign_sc, foreign_fd, foreign_ot) AS maxhold").
 		Joins("JOIN stock s ON si.stock_code = s.code").
 		Where("? = maxhold", condition).
+		Scan(&listStock).
 		Error
 
 	return listStock, err

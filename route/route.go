@@ -13,5 +13,6 @@ func SetupRouter() *gin.Engine {
 	StockWebRoute(router)
 	IpoRoute(router)
 	BrokerRoute(router)
+	StockRoute(router)
 	return router
 }
