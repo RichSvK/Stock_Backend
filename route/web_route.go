@@ -13,5 +13,4 @@ func StockWebRoute(router *gin.Engine) {
 	stockWebService := service.NewStockWebService(stockWebRepository)
 	stockWebController := controller.NewStockWebController(stockWebService)
 	router.GET("/links", stockWebController.GetLinks)
-	router.GET("/links/:category", stockWebController.GetLinkReference)
 }
