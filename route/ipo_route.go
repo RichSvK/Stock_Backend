@@ -13,8 +13,9 @@ func IpoRoute(router *gin.Engine) {
 	ipoService := service.NewIpoService(ipoRepository)
 	ipoController := controller.NewIpoController(ipoService)
 
+	// Get all IPO data
 	router.GET("/ipo", ipoController.GetAllIpo)
-	router.GET("/ipo/value", ipoController.GetIpoByValue)
-	router.GET("/ipo/underwriter/:underwriter", ipoController.GetIpoByUnderwriter)
+
+	// Get IPO by dynamic conditions
 	router.POST("/ipo/condition", ipoController.GetIpoByCondition)
 }

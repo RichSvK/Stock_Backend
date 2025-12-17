@@ -60,7 +60,7 @@ func (controller *BalanceControllerImpl) ExportBalanceController(c *gin.Context)
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	stockCode := c.Query("code")
+	stockCode := c.Param("code")
 	status, output := controller.BalanceService.ExportCode(ctx, stockCode)
 	if status != 200 {
 		c.Header("Content-Type", "application/json")
