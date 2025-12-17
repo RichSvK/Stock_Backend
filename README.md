@@ -32,7 +32,8 @@ Software used in developing this program:
 - `GET /stock` - Search stock with the given prefix text
 
 ## IPO Stock
-- `GET /ipo` - Get IPO Stock based on the filter criteria
+- `GET /ipo` - Get IPO Stocks data
+- `POST /ipo/condition` - Get IPO Stocks based on dynamic filter
 
 ## Broker
 - `GET /brokers` - Get list of broker
