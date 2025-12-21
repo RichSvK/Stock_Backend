@@ -1,7 +1,6 @@
 package config
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/url"
@@ -13,10 +12,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var PoolDB *gorm.DB = nil
-var SqlDB *sql.DB = nil
-
-func InitializeDBConnection() {
+func InitializeDBConnection() *gorm.DB {
 	var err error
 
 	dbUser := os.Getenv("DB_USER")
@@ -24,6 +20,10 @@ func InitializeDBConnection() {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
+
+	if dbUser == "" || dbPass == "" || dbHost == "" || dbPort == "" || dbName == "" {
+		log.Fatal("Missing required database environment variables")
+	}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=True",
 		dbUser,
@@ -33,7 +33,7 @@ func InitializeDBConnection() {
 		dbName,
 	)
 
-	PoolDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	PoolDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		// Logger:                 logger.Default.LogMode(logger.Info), // Use for debug
 		Logger:                 logger.Default.LogMode(logger.Silent),
 		PrepareStmt:            true,
@@ -41,25 +41,23 @@ func InitializeDBConnection() {
 	})
 
 	if err != nil {
-		panic("Error")
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	SqlDB, err = PoolDB.DB()
+	SqlDB, err := PoolDB.DB()
 	if err != nil {
-		panic("Failed to connect")
+		log.Fatalf("Failed to get database instance: %v", err)
 	}
 
-	if SqlDB.Ping() != nil {
+	if err := SqlDB.Ping(); err != nil {
 		log.Fatal("Failed to connect")
-		return
+		return nil
 	}
 
 	SqlDB.SetMaxIdleConns(3)
 	SqlDB.SetMaxOpenConns(10)
-	SqlDB.SetConnMaxIdleTime(10 * time.Second)
-	SqlDB.SetConnMaxLifetime(20 * time.Second)
-}
-
-func GetDatabaseInstance() *gorm.DB {
+	SqlDB.SetConnMaxIdleTime(5 * time.Minute)
+	SqlDB.SetConnMaxLifetime(20 * time.Minute)
+	log.Println("Database connection established successfully")
 	return PoolDB
 }

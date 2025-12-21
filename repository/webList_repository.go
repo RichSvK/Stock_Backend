@@ -1,23 +1,28 @@
 package repository
 
 import (
-	"backend/config"
 	"backend/model/entity"
 	"context"
+
+	"gorm.io/gorm"
 )
 
 type StockWebRepository interface {
 	GetLinks(ctx context.Context, categoryID string) ([]entity.Link, error)
 }
 
-type StockWebRepositoryImpl struct{}
+type StockWebRepositoryImpl struct {
+	DB *gorm.DB
+}
 
-func NewStockWebRepository() StockWebRepository {
-	return &StockWebRepositoryImpl{}
+func NewStockWebRepository(db *gorm.DB) StockWebRepository {
+	return &StockWebRepositoryImpl{
+		DB: db,
+	}
 }
 
 func (repository *StockWebRepositoryImpl) GetLinks(ctx context.Context, categoryID string) ([]entity.Link, error) {
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 
 	// Jika categoryID diberikan, tambahkan kondisi WHERE ke query.
 	if categoryID != "" {

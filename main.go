@@ -12,13 +12,15 @@ func main() {
 	// Initialize local environment variables
 	config.InitEnvironment()
 
-	config.InitializeDBConnection()
+	db := config.InitializeDBConnection()
+	defer func() {
+		sqlDB, _ := db.DB()
+		_ = sqlDB.Close()
+	}()
+
 	config.MakeFolder("Resource")
 
-	// Commented out AutoMigrate for production
-	// db := config.GetDatabaseInstance()
-
-	// AutoMigrate database tables
+	// AutoMigrate database tables (commented out for production)
 	// if err := db.AutoMigrate(
 	// 	&entity.StockIPO{},
 	// 	&entity.Broker{},
@@ -36,7 +38,7 @@ func main() {
 	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
 	// }()
 
-	router := route.SetupRouter()
+	router := route.SetupRouter(db)
 
 	// Use PORT env or default to 8080
 	port := os.Getenv("PORT")

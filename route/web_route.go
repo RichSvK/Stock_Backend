@@ -6,11 +6,13 @@ import (
 	"backend/service"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func StockWebRoute(router *gin.Engine) {
-	stockWebRepository := repository.NewStockWebRepository()
+func StockWebRoute(router *gin.Engine, db *gorm.DB) {
+	stockWebRepository := repository.NewStockWebRepository(db)
 	stockWebService := service.NewStockWebService(stockWebRepository)
 	stockWebController := controller.NewStockWebController(stockWebService)
+
 	router.GET("/links", stockWebController.GetLinks)
 }

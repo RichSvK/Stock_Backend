@@ -6,10 +6,11 @@ import (
 	"backend/service"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func IpoRoute(router *gin.Engine) {
-	ipoRepository := repository.NewIpoRepository()
+func IpoRoute(router *gin.Engine, db *gorm.DB) {
+	ipoRepository := repository.NewIpoRepository(db)
 	ipoService := service.NewIpoService(ipoRepository)
 	ipoController := controller.NewIpoController(ipoService)
 

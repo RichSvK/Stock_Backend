@@ -1,12 +1,13 @@
 package repository
 
 import (
-	"backend/config"
 	"backend/model/entity"
 	"backend/model/web/request"
 	"context"
 	"fmt"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
 type IpoRepository interface {
@@ -14,16 +15,20 @@ type IpoRepository interface {
 	FindByCondition(ctx context.Context, request []request.Filter) ([]entity.Ipo, error)
 }
 
-type IpoRepositoryImpl struct{}
+type IpoRepositoryImpl struct {
+	DB *gorm.DB
+}
 
-func NewIpoRepository() IpoRepository {
-	return &IpoRepositoryImpl{}
+func NewIpoRepository(db *gorm.DB) IpoRepository {
+	return &IpoRepositoryImpl{
+		DB: db,
+	}
 }
 
 func (repository *IpoRepositoryImpl) GetAllIpo(ctx context.Context) ([]entity.Ipo, error) {
 	var listStock []entity.Ipo = nil
 	var err error
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 	query := "id.stock_code AS stock_code, price, ipo_shares, listed_shares, equity, warrant, nominal, mcb, is_affiliated, is_acceleration, is_new, lock_up, subscribed_stock, GROUP_CONCAT(uw_code) AS all_underwriter, GROUP_CONCAT(uw_shares) AS all_shares, (price * ipo_shares) AS amount"
 	err = db.Table("ipo_detail id").
 		WithContext(ctx).
@@ -37,7 +42,7 @@ func (repository *IpoRepositoryImpl) GetAllIpo(ctx context.Context) ([]entity.Ip
 
 func (repository *IpoRepositoryImpl) FindByCondition(ctx context.Context, request []request.Filter) ([]entity.Ipo, error) {
 	var listStock []entity.Ipo = nil
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 
 	db_query := db.Table("ipo_detail id")
 	for _, filter := range request {

@@ -6,12 +6,14 @@ import (
 	"backend/service"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func BalanceRoute(router *gin.Engine) {
-	balanceRepository := repository.NewBalanceRepository()
+func BalanceRoute(router *gin.Engine, db *gorm.DB) {
+	balanceRepository := repository.NewBalanceRepository(db)
 	balanceService := service.NewBalanceService(balanceRepository)
 	balanceController := controller.NewBalanceController(balanceService)
+
 	router.GET("/balance/export/:code", balanceController.ExportBalanceController)
 	router.GET("/balance/:code", balanceController.GetBalanceChart)
 	router.POST("/balance/upload", balanceController.Upload)

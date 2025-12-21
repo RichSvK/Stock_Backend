@@ -1,13 +1,14 @@
 package repository
 
 import (
-	"backend/config"
 	"backend/model/entity"
 	"backend/model/web/response"
 	"context"
 	"fmt"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type BalanceRepository interface {
@@ -17,14 +18,18 @@ type BalanceRepository interface {
 	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string, startDate string, endDate string) ([]response.BalanceChangeData, error)
 }
 
-type BalanceRepositoryImpl struct{}
+type BalanceRepositoryImpl struct {
+	DB *gorm.DB
+}
 
-func NewBalanceRepository() BalanceRepository {
-	return &BalanceRepositoryImpl{}
+func NewBalanceRepository(db *gorm.DB) BalanceRepository {
+	return &BalanceRepositoryImpl{
+		DB: db,
+	}
 }
 
 func (repository *BalanceRepositoryImpl) Create(ctx context.Context, stock []entity.Stock) error {
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 	tx := db.WithContext(ctx).Begin()
 
 	defer func() {
@@ -46,7 +51,7 @@ func (repository *BalanceRepositoryImpl) Create(ctx context.Context, stock []ent
 }
 
 func (repository *BalanceRepositoryImpl) GetBalanceStock(ctx context.Context, code string) ([]entity.Stock, error) {
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 
 	var listStock []entity.Stock = nil
 	err := db.WithContext(ctx).
@@ -62,7 +67,7 @@ func (repository *BalanceRepositoryImpl) GetBalanceStock(ctx context.Context, co
 }
 
 func (repository *BalanceRepositoryImpl) GetScriptlessChange(ctx context.Context, startDate time.Time, endDate time.Time) ([]entity.Stock, error) {
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 
 	var listStock []entity.Stock
 	startMonth := int(startDate.Month())
@@ -89,7 +94,7 @@ func quoteIdent(col string) string {
 }
 
 func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string, startDate string, endDate string) ([]response.BalanceChangeData, error) {
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 	var listStock []response.BalanceChangeData
 
 	var AllowedColumns = map[string]bool{

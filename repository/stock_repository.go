@@ -1,24 +1,29 @@
 package repository
 
 import (
-	"backend/config"
 	"context"
 	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type StockRepository interface {
 	SearchStock(ctx context.Context, stockCode string) ([]string, error)
 }
 
-type SearchStockImpl struct{}
+type SearchStockImpl struct {
+	DB *gorm.DB
+}
 
-func NewStockRepository() StockRepository {
-	return &SearchStockImpl{}
+func NewStockRepository(db *gorm.DB) StockRepository {
+	return &SearchStockImpl{
+		DB: db,
+	}
 }
 
 func (repository *SearchStockImpl) SearchStock(ctx context.Context, stockCode string) ([]string, error) {
-	db := config.GetDatabaseInstance()
+	db := repository.DB
 
 	start := time.Now()
 
