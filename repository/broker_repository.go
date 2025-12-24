@@ -29,5 +29,6 @@ func (repository *BrokerRepositoryImpl) GetBrokers(ctx context.Context) ([]entit
 		WithContext(ctx).
 		Scan(&listBroker).
 		Error
+
 	return listBroker, err
 }

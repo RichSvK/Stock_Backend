@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -25,8 +23,6 @@ func NewStockRepository(db *gorm.DB) StockRepository {
 func (repository *SearchStockImpl) SearchStock(ctx context.Context, stockCode string) ([]string, error) {
 	db := repository.DB
 
-	start := time.Now()
-
 	var listStock []string = nil
 	err := db.WithContext(ctx).
 		Table("stock").
@@ -35,8 +31,5 @@ func (repository *SearchStockImpl) SearchStock(ctx context.Context, stockCode st
 		Pluck("code", &listStock).
 		Error
 
-	elapsed := time.Since(start)
-
-	fmt.Println("Time for query: " + elapsed.String())
 	return listStock, err
 }

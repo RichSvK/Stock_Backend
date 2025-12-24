@@ -2,10 +2,10 @@ package repository
 
 import (
 	"backend/model/entity"
-	"backend/model/web/response"
+	domain_error "backend/model/error"
+	query_model "backend/model/query"
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -15,7 +15,7 @@ type BalanceRepository interface {
 	Create(ctx context.Context, stock []entity.Stock) error
 	GetBalanceStock(ctx context.Context, code string) ([]entity.Stock, error)
 	GetScriptlessChange(ctx context.Context, startDate time.Time, endDate time.Time) ([]entity.Stock, error)
-	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string, startDate string, endDate string) ([]response.BalanceChangeData, error)
+	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int, startDate string, endDate string) ([]query_model.BalanceChange, error)
 }
 
 type BalanceRepositoryImpl struct {
@@ -40,13 +40,14 @@ func (repository *BalanceRepositoryImpl) Create(ctx context.Context, stock []ent
 
 	if err := tx.Create(&stock).Error; err != nil {
 		tx.Rollback()
-		return err
+		return domain_error.ErrBalanceCreationFailed
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
-		return err
+		return domain_error.ErrBalanceCreationFailed
 	}
+
 	return nil
 }
 
@@ -62,6 +63,14 @@ func (repository *BalanceRepositoryImpl) GetBalanceStock(ctx context.Context, co
 		Limit(6).
 		Scan(&listStock).
 		Error
+
+	if err != nil {
+		return nil, domain_error.ErrInternalServer
+	}
+
+	if len(listStock) == 0 {
+		return nil, domain_error.ErrBalanceNotFound
+	}
 
 	return listStock, err
 }
@@ -84,6 +93,14 @@ func (repository *BalanceRepositoryImpl) GetScriptlessChange(ctx context.Context
 		Scan(&listStock).
 		Error
 
+	if err != nil {
+		return nil, domain_error.ErrInternalServer
+	}
+
+	if len(listStock) == 0 {
+		return nil, domain_error.ErrBalanceNotFound
+	}
+
 	return listStock, err
 }
 
@@ -93,58 +110,22 @@ func quoteIdent(col string) string {
 	return "`" + col + "`"
 }
 
-func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string, startDate string, endDate string) ([]response.BalanceChangeData, error) {
+func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int, startDate string, endDate string) ([]query_model.BalanceChange, error) {
 	db := repository.DB
-	var listStock []response.BalanceChangeData
-
-	var AllowedColumns = map[string]bool{
-		"local_is": true,
-		"local_cp": true,
-		"local_pf": true,
-		"local_ib": true,
-		"local_id": true,
-		"local_mf": true,
-		"local_sc": true,
-		"local_fd": true,
-		"local_ot": true,
-
-		"foreign_is": true,
-		"foreign_cp": true,
-		"foreign_pf": true,
-		"foreign_ib": true,
-		"foreign_id": true,
-		"foreign_mf": true,
-		"foreign_sc": true,
-		"foreign_fd": true,
-		"foreign_ot": true,
-	}
-
-	if !AllowedColumns[shareholderType] {
-		return nil, fmt.Errorf("invalid column name: %s", shareholderType)
-	}
 
 	quotedCol := quoteIdent(shareholderType)
 	prevCol := "prev_" + shareholderType
 
 	const pageSize = 11
-	var offset int
-	if page != "" {
-		if pNum, err := strconv.Atoi(page); err == nil && pNum > 0 {
-			offset = (pNum - 1) * (pageSize - 1)
-		}
-	}
+	offset := (page - 1) * (pageSize - 1)
 
 	var changeExpr string
 	var whereCond string
 	if change == "Decrease" {
-		changeExpr = fmt.Sprintf(
-			`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[2]s - t.%[1]s) / t.%[2]s * 100) END`,
-			quotedCol, prevCol)
+		changeExpr = fmt.Sprintf(`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[2]s - t.%[1]s) / t.%[2]s * 100) END`, quotedCol, prevCol)
 		whereCond = fmt.Sprintf("t.%s < t.%s", quotedCol, prevCol)
 	} else {
-		changeExpr = fmt.Sprintf(
-			`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[1]s - t.%[2]s) / t.%[2]s * 100) END`,
-			quotedCol, prevCol)
+		changeExpr = fmt.Sprintf(`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[1]s - t.%[2]s) / t.%[2]s * 100) END`, quotedCol, prevCol)
 		whereCond = fmt.Sprintf("t.%s > t.%s", quotedCol, prevCol)
 	}
 
@@ -165,10 +146,14 @@ func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Contex
 		ORDER BY change_percentage DESC, t.code
 		LIMIT ? OFFSET ?;`, quotedCol, prevCol, changeExpr, whereCond)
 
-	if err := db.WithContext(ctx).
+	var listStock []query_model.BalanceChange
+	err := db.WithContext(ctx).
 		Raw(query, startDate, endDate, pageSize, offset).
-		Scan(&listStock).Error; err != nil {
-		return nil, err
+		Scan(&listStock).
+		Error
+
+	if err != nil {
+		return nil, domain_error.ErrInternalServer
 	}
 	return listStock, nil
 }
