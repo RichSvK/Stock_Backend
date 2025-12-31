@@ -8,6 +8,7 @@ import (
 	"strconv"
 )
 
+// Function to delete the file
 func RemoveFile(filePath string) error {
 	err := os.Remove(filePath)
 	if err != nil {
@@ -17,6 +18,7 @@ func RemoveFile(filePath string) error {
 	return nil
 }
 
+// Function to create a CSV file from the list of stocks
 func MakeCSV(code string, listStock []entity.Stock) error {
 	file, err := os.Create("./Resource/" + code + ".csv")
 	if err != nil {
@@ -51,6 +53,7 @@ func MakeCSV(code string, listStock []entity.Stock) error {
 	return nil
 }
 
+// Function to write a single stock record to CSV
 func WriteStockData(w *csv.Writer, stock *entity.Stock) error {
 	record := []string{
 		stock.Date.Format("02-01-2006"),

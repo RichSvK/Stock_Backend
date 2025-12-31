@@ -1,13 +1,14 @@
 package service
 
 import (
-	"backend/helper"
+	domain_error "backend/model/error"
+	"backend/model/web/response"
 	"backend/repository"
 	"context"
 )
 
 type BrokerService interface {
-	GetBrokers(ctx context.Context) (int, any)
+	GetBrokers(ctx context.Context) (*response.GetBrokerResponse, error)
 }
 
 type BrokerServiceImpl struct {
@@ -20,15 +21,20 @@ func NewBrokerService(repositoryBroker repository.BrokerRepository) BrokerServic
 	}
 }
 
-func (service *BrokerServiceImpl) GetBrokers(ctx context.Context) (int, any) {
+func (service *BrokerServiceImpl) GetBrokers(ctx context.Context) (*response.GetBrokerResponse, error) {
 	listBroker, err := service.BrokerRepository.GetBrokers(ctx)
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, "Failed to get broker data")
+		return nil, domain_error.ErrInternalServer
 	}
 
 	if len(listBroker) == 0 {
-		return 404, helper.ToFailedResponse(404, "Broker data not found")
+		return nil, domain_error.ErrBrokerNotFound
 	}
 
-	return 200, helper.ToWebResponse(200, "Broker data found", helper.ToBrokerResponses(listBroker))
+	response := &response.GetBrokerResponse{
+		Message: "Brokers data found",
+		Data:    response.ToBrokerResponses(listBroker),
+	}
+	
+	return response, err
 }

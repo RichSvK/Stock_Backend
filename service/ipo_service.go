@@ -1,15 +1,16 @@
 package service
 
 import (
-	"backend/helper"
+	domain_error "backend/model/error"
 	"backend/model/web/request"
+	"backend/model/web/response"
 	"backend/repository"
 	"context"
 )
 
 type IpoService interface {
-	GetIpoAll(ctx context.Context) (int, any)
-	GetIpoByCondition(ctx context.Context, request []request.Filter) (int, any)
+	GetIpoAll(ctx context.Context) (*response.GetIpoResponse, error)
+	GetIpoByCondition(ctx context.Context, request []request.Filter) (*response.GetIpoResponse, error)
 }
 
 type IpoServiceImpl struct {
@@ -22,29 +23,38 @@ func NewIpoService(repositoryIPO repository.IpoRepository) IpoService {
 	}
 }
 
-func (service *IpoServiceImpl) GetIpoAll(ctx context.Context) (int, any) {
+func (service *IpoServiceImpl) GetIpoAll(ctx context.Context) (*response.GetIpoResponse, error) {
 	listIPO, err := service.IpoRepository.GetAllIpo(ctx)
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
+		return nil, err
 	}
 
 	if len(listIPO) == 0 {
-		return 404, helper.ToFailedResponse(404, "IPO data not found")
+		return nil, domain_error.ErrIpoDataNotFound
 	}
 
-	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
+	response := &response.GetIpoResponse{
+		Message: "IPO data found",
+		Data:    response.ToIpoResponses(listIPO),
+	}
+	return response, err
 }
 
-func (service *IpoServiceImpl) GetIpoByCondition(ctx context.Context, request []request.Filter) (int, any) {
+func (service *IpoServiceImpl) GetIpoByCondition(ctx context.Context, request []request.Filter) (*response.GetIpoResponse, error) {
 	listIPO, err := service.IpoRepository.FindByCondition(ctx, request)
 
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, "Failed to get IPO data")
+		return nil, err
 	}
 
 	if len(listIPO) == 0 {
-		return 404, helper.ToFailedResponse(404, "IPO data not found")
+		return nil, domain_error.ErrIpoDataNotFound
 	}
 
-	return 200, helper.ToWebResponse(200, "IPO data found", helper.ToIpoResponses(listIPO))
+	response := &response.GetIpoResponse{
+		Message: "IPO data found",
+		Data:    response.ToIpoResponses(listIPO),
+	}
+
+	return response, err
 }

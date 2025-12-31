@@ -1,14 +1,14 @@
 package service
 
 import (
-	"backend/helper"
-	"backend/model/web/output"
+	domain_error "backend/model/error"
+	"backend/model/web/response"
 	"backend/repository"
 	"context"
 )
 
 type StockService interface {
-	SearchStock(ctx context.Context, code string) (int, any)
+	SearchStock(ctx context.Context, code string) (*response.SearchStockResponse, error)
 }
 
 type StockServiceImpl struct {
@@ -21,18 +21,20 @@ func NewStockService(stockRepository repository.StockRepository) StockService {
 	}
 }
 
-func (service *StockServiceImpl) SearchStock(ctx context.Context, code string) (int, any) {
+func (service *StockServiceImpl) SearchStock(ctx context.Context, code string) (*response.SearchStockResponse, error) {
 	listStock, err := service.StockRepository.SearchStock(ctx, code)
 	if err != nil {
-		return 500, "Failed to search stock"
+		return nil, domain_error.ErrInternalServer
 	}
 
 	if len(listStock) == 0 {
-		return 404, "Stock not found"
+		return nil, domain_error.ErrStockNotFound
 	}
 
-	return 200, output.SuccessResponse{
+	response := &response.SearchStockResponse{
 		Message: "Stock found",
-		Data:    helper.ToSearchStockResponses(listStock).Data,
+		Data:    listStock,
 	}
+
+	return response, err
 }

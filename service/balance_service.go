@@ -3,12 +3,14 @@ package service
 import (
 	"backend/helper"
 	"backend/model/entity"
+	domain_error "backend/model/error"
 	"backend/model/web/response"
 	"backend/repository"
 	"bufio"
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -18,11 +20,11 @@ import (
 )
 
 type BalanceService interface {
-	Create(ctx context.Context, fileName string) (int, any)
-	ExportCode(ctx context.Context, code string) (int, any)
-	GetBalanceData(ctx context.Context, code string) (int, any)
-	GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (int, any)
-	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string) (int, any)
+	Create(ctx context.Context, fileName string) (*response.UploadBalanceResponse, error)
+	ExportCode(ctx context.Context, code string) error
+	GetBalanceData(ctx context.Context, code string) (*response.GetBalanceResponse, error)
+	GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (*response.GetScriptlessChangeResponse, error)
+	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int) (*response.BalanceChangeResponse, error)
 }
 
 type BalanceServiceImpl struct {
@@ -35,16 +37,16 @@ func NewBalanceService(repositoryBalance repository.BalanceRepository) BalanceSe
 	}
 }
 
-func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) (int, any) {
+func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) (*response.UploadBalanceResponse, error) {
 	var path = filepath.Join("Resource", fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0444)
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return nil, domain_error.ErrInternalServer
 	}
 
 	defer func() {
 		if err := file.Close(); err != nil {
-			fmt.Println("Error closing file:", err)
+			log.Println("Error closing file:", err)
 		}
 	}()
 
@@ -52,7 +54,7 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 	_, _, err = reader.ReadLine()
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return nil, domain_error.ErrInternalServer
 	}
 
 	var rowsData []byte
@@ -77,12 +79,12 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 		stock.Date, err = time.Parse(dateFormatter, string(stockData[0]))
 		if err != nil {
-			return 500, helper.ToFailedResponse(500, err.Error())
+			return nil, domain_error.ErrInternalServer
 		}
 
 		stock.Date, err = time.Parse("02-01-2006", stock.Date.Format("02-01-2006"))
 		if err != nil {
-			return 500, helper.ToFailedResponse(500, err.Error())
+			return nil, domain_error.ErrInternalServer
 		}
 
 		stock.Code = string(stockData[1])
@@ -113,54 +115,79 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 	err = service.BalanceRepository.Create(ctx, listStock)
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return nil, domain_error.ErrInternalServer
 	}
 
-	return 201, helper.ToWebResponse(201, "Success insert data", nil)
+	response := &response.UploadBalanceResponse{
+		Message: "Data uploaded and data inserted successfully",
+	}
+
+	return response, err
 }
 
-func (service *BalanceServiceImpl) ExportCode(ctx context.Context, code string) (int, any) {
+func (service *BalanceServiceImpl) ExportCode(ctx context.Context, code string) error {
 	listStock, err := service.BalanceRepository.GetBalanceStock(ctx, code)
 
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return err
 	}
 
 	if len(listStock) == 0 {
-		return 404, helper.ToFailedResponse(404, fmt.Sprintf("Stock %s Not Found", code))
+		return domain_error.ErrBalanceNotFound
 	}
 
 	err = helper.MakeCSV(code, listStock)
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return domain_error.ErrFailedWriteCSV
 	}
 
-	return 200, helper.ToWebResponse(200, "Success export data", nil)
+	return err
 }
 
-func (service *BalanceServiceImpl) GetBalanceData(ctx context.Context, code string) (int, any) {
+func (service *BalanceServiceImpl) GetBalanceData(ctx context.Context, code string) (*response.GetBalanceResponse, error) {
 	listBalance, err := service.BalanceRepository.GetBalanceStock(ctx, code)
-	helper.PanicIfError(err)
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return nil, err
 	}
 
 	if len(listBalance) == 0 {
-		return 404, helper.ToFailedResponse(404, fmt.Sprintf("%s was not found", code))
+		return nil, domain_error.ErrBalanceNotFound
 	}
 
-	return 200, helper.ToWebResponse(200, fmt.Sprintf("%s data found", code), helper.ToBalanceResponses(listBalance))
+	response := &response.GetBalanceResponse{
+		Message: fmt.Sprintf("Balance data for stock code %s retrieved successfully", code),
+		Data:    response.ToBalanceResponses(listBalance),
+	}
+
+	return response, err
 }
 
-func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (int, any) {
+func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (*response.GetScriptlessChangeResponse, error) {
+	if startTime.After(endTime) {
+		return nil, domain_error.ErrInvalidDateRange
+	}
+
+	// Check if date range exceeds 1 month (31 days)
+	const maxDays = 31
+	daysDiff := int(endTime.Sub(startTime).Hours() / 24)
+	if daysDiff > maxDays {
+		return nil, domain_error.ErrInvalidDateRange
+	}
+
+	// Check if dates are not in the future
+	now := time.Now()
+	if startTime.After(now) || endTime.After(now) {
+		return nil, domain_error.ErrInvalidDateRange
+	}
+
 	listStock, err := service.BalanceRepository.GetScriptlessChange(ctx, startTime, endTime)
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return nil, err
 	}
 
 	count := len(listStock)
 	if count == 0 {
-		return 404, helper.ToFailedResponse(404, "Scriptless data not found")
+		return nil, domain_error.ErrBalanceNotFound
 	}
 
 	var listResponseChange []response.ScriptlessResponse
@@ -170,8 +197,8 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 
 		if i < count-1 && listStock[i].Code == listStock[i+1].Code {
 			stock.Code = listStock[i].Code
-			stock.FirstShare = TotalShares(listStock[i])
-			stock.SecondShare = TotalShares(listStock[i+1])
+			stock.FirstShare = TotalShares(&listStock[i])
+			stock.SecondShare = TotalShares(&listStock[i+1])
 			stock.FirstListedShares = listStock[i].ListedShares
 			stock.SecondListedShares = listStock[i+1].ListedShares
 			stock.Change = int64(stock.SecondShare) - int64(stock.FirstShare)
@@ -188,13 +215,13 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 				// IPO Stock
 				stock.FirstShare = 0
 				stock.FirstListedShares = 0
-				stock.SecondShare = TotalShares(listStock[i])
+				stock.SecondShare = TotalShares(&listStock[i])
 				stock.SecondListedShares = listStock[i].ListedShares
 				stock.Change = int64(stock.SecondShare)
 				stock.ChangePercentage = 100
 			} else {
 				// Delisted Stock
-				stock.FirstShare = TotalShares(listStock[i])
+				stock.FirstShare = TotalShares(&listStock[i])
 				stock.FirstListedShares = listStock[i].ListedShares
 				stock.SecondShare = 0
 				stock.SecondListedShares = 0
@@ -209,30 +236,63 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 		return listResponseChange[i].ChangePercentage > listResponseChange[j].ChangePercentage
 	})
 
-	return 200, helper.ToWebResponse(200, "Scriptless data change found", listResponseChange)
+	response := &response.GetScriptlessChangeResponse{
+		Message: "Scriptless change data retrieved successfully",
+		Data:    listResponseChange,
+	}
+
+	return response, err
 }
 
-func TotalShares(s entity.Stock) uint64 {
+func TotalShares(s *entity.Stock) uint64 {
 	return s.LocalIS + s.LocalCP + s.LocalPF + s.LocalIB + s.LocalID + s.LocalMF +
 		s.LocalSC + s.LocalFD + s.LocalOT + s.ForeignIS + s.ForeignCP + s.ForeignPF +
 		s.ForeignIB + s.ForeignID + s.ForeignMF + s.ForeignSC + s.ForeignFD + s.ForeignOT
 }
 
-func (service *BalanceServiceImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page string) (int, any) {
+func (service *BalanceServiceImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int) (*response.BalanceChangeResponse, error) {
+	if page < 1 {
+		return nil, domain_error.ErrPaginationInvalid
+	}
+
+	var AllowedColumns = map[string]bool{
+		"local_is": true, "local_cp": true, "local_pf": true,
+		"local_ib": true, "local_id": true, "local_mf": true,
+		"local_sc": true, "local_fd": true, "local_ot": true,
+		"foreign_is": true, "foreign_cp": true, "foreign_pf": true,
+		"foreign_ib": true, "foreign_id": true, "foreign_mf": true,
+		"foreign_sc": true, "foreign_fd": true, "foreign_ot": true,
+	}
+
+	if !AllowedColumns[shareholderType] {
+		return nil, domain_error.ErrInvalidShareholderType
+	}
+
+	if change != "Increase" && change != "Decrease" {
+		return nil, domain_error.ErrInvalidChangeRequest
+	}
+
 	now := time.Now()
-	prevYM := now.AddDate(0, -1, 0).Format("2006-01")
-	prev2YM := now.AddDate(0, -2, 0).Format("2006-01")
+
+	base := time.Date(
+		now.Year(),
+		now.Month(),
+		1,
+		0, 0, 0, 0,
+		now.Location(),
+	)
+
+	prevYM := base.AddDate(0, -1, 0).Format("2006-01")
+	prev2YM := base.AddDate(0, -2, 0).Format("2006-01")
 
 	listBalanceChange, err := service.BalanceRepository.GetBalanceChangeData(ctx, shareholderType, change, page, prev2YM, prevYM)
 
-	helper.PanicIfError(err)
-
 	if err != nil {
-		return 500, helper.ToFailedResponse(500, err.Error())
+		return nil, err
 	}
 
 	if len(listBalanceChange) == 0 {
-		return 404, helper.ToFailedResponse(404, "No balance change data found")
+		return nil, domain_error.ErrBalanceNotFound
 	}
 
 	listBalanceChangeLen := len(listBalanceChange)
@@ -241,10 +301,10 @@ func (service *BalanceServiceImpl) GetBalanceChangeData(ctx context.Context, sha
 		listBalanceChange = listBalanceChange[:10]
 	}
 
-	response := response.BalanceChangesResponse{
+	response := response.BalanceChangeResponse{
 		HaveNext: listBalanceChangeLen == 11,
 		Data:     listBalanceChange,
 	}
 
-	return 200, response
+	return &response, nil
 }

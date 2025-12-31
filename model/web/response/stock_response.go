@@ -1,5 +1,6 @@
 package response
 
 type SearchStockResponse struct {
-	Data []string `json:"data"`
+	Message string   `json:"message"`
+	Data    []string `json:"data"`
 }
