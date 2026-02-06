@@ -88,8 +88,8 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 		}
 
 		stock.Code = string(stockData[1])
-
 		stock.ListedShares, _ = strconv.ParseUint(string(stockData[3]), 10, 64)
+		stock.Price, _ = strconv.ParseUint(string(stockData[4]), 10, 64)
 		stock.LocalIS, _ = strconv.ParseUint(string(stockData[5]), 10, 64)
 		stock.LocalCP, _ = strconv.ParseUint(string(stockData[6]), 10, 64)
 		stock.LocalPF, _ = strconv.ParseUint(string(stockData[7]), 10, 64)
