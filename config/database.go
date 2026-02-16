@@ -54,7 +54,7 @@ func InitializeDBConnection() *gorm.DB {
 		return nil
 	}
 
-	SqlDB.SetMaxIdleConns(3)
+	SqlDB.SetMaxIdleConns(5)
 	SqlDB.SetMaxOpenConns(10)
 	SqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	SqlDB.SetConnMaxLifetime(20 * time.Minute)

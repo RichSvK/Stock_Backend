@@ -167,16 +167,13 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 		return nil, domain_error.ErrInvalidDateRange
 	}
 
-	// Check if date range exceeds 1 month (31 days)
-	const maxDays = 31
-	daysDiff := int(endTime.Sub(startTime).Hours() / 24)
-	if daysDiff > maxDays {
+	if endTime.Before(startTime.AddDate(0, 1, 0)) {
 		return nil, domain_error.ErrInvalidDateRange
 	}
 
 	// Check if dates are not in the future
 	now := time.Now()
-	if startTime.After(now) || endTime.After(now) {
+	if endTime.After(now) || startTime.After(endTime) {
 		return nil, domain_error.ErrInvalidDateRange
 	}
 
