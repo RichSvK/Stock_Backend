@@ -52,9 +52,22 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 	reader := bufio.NewReader(file)
 
-	_, _, err = reader.ReadLine()
+	headerLine, _, err := reader.ReadLine()
 	if err != nil {
 		return nil, domain_error.ErrInternalServer
+	}
+
+	headers := strings.Split(string(headerLine), "|")
+	headerMap := make(map[string]int)
+	for i, value := range headers {
+		headerMap[strings.TrimSpace(value)] = i
+	}
+
+	get := func(row []string, key string) string {
+		if idx, ok := headerMap[key]; ok && idx < len(row) {
+			return strings.TrimSpace(row[idx])
+		}
+		return ""
 	}
 
 	var rowsData []byte
@@ -69,15 +82,15 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 		}
 
 		stockData := strings.Split(string(rowsData), "|")
-		if stockData[2] == "CORPORATE BOND" {
+		if get(stockData, "Type") != "EQUITY" {
 			break
 		}
 
-		if len(stockData[1]) != 4 {
+		if len(get(stockData, "Code")) != 4 {
 			continue
 		}
 
-		stock.Date, err = time.Parse(dateFormatter, string(stockData[0]))
+		stock.Date, err = time.Parse(dateFormatter, get(stockData, "Date"))
 		if err != nil {
 			return nil, domain_error.ErrInternalServer
 		}
@@ -87,28 +100,29 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 			return nil, domain_error.ErrInternalServer
 		}
 
-		stock.Code = string(stockData[1])
+		stock.Code = get(stockData, "Code")
 		stock.ListedShares, _ = strconv.ParseUint(string(stockData[3]), 10, 64)
-		stock.Price, _ = strconv.ParseUint(string(stockData[4]), 10, 64)
-		stock.LocalIS, _ = strconv.ParseUint(string(stockData[5]), 10, 64)
-		stock.LocalCP, _ = strconv.ParseUint(string(stockData[6]), 10, 64)
-		stock.LocalPF, _ = strconv.ParseUint(string(stockData[7]), 10, 64)
-		stock.LocalIB, _ = strconv.ParseUint(string(stockData[8]), 10, 64)
-		stock.LocalID, _ = strconv.ParseUint(string(stockData[9]), 10, 64)
-		stock.LocalMF, _ = strconv.ParseUint(string(stockData[10]), 10, 64)
-		stock.LocalSC, _ = strconv.ParseUint(string(stockData[11]), 10, 64)
-		stock.LocalFD, _ = strconv.ParseUint(string(stockData[12]), 10, 64)
-		stock.LocalOT, _ = strconv.ParseUint(string(stockData[13]), 10, 64)
+		stock.Price, _ = strconv.ParseUint(get(stockData, "Price"), 10, 64)
 
-		stock.ForeignIS, _ = strconv.ParseUint(string(stockData[15]), 10, 64)
-		stock.ForeignCP, _ = strconv.ParseUint(string(stockData[16]), 10, 64)
-		stock.ForeignPF, _ = strconv.ParseUint(string(stockData[17]), 10, 64)
-		stock.ForeignIB, _ = strconv.ParseUint(string(stockData[18]), 10, 64)
-		stock.ForeignID, _ = strconv.ParseUint(string(stockData[19]), 10, 64)
-		stock.ForeignMF, _ = strconv.ParseUint(string(stockData[20]), 10, 64)
-		stock.ForeignSC, _ = strconv.ParseUint(string(stockData[21]), 10, 64)
-		stock.ForeignFD, _ = strconv.ParseUint(string(stockData[22]), 10, 64)
-		stock.ForeignOT, _ = strconv.ParseUint(string(stockData[23]), 10, 64)
+		stock.LocalIS, _ = strconv.ParseUint(get(stockData, "Local IS"), 10, 64)
+		stock.LocalCP, _ = strconv.ParseUint(get(stockData, "Local CP"), 10, 64)
+		stock.LocalPF, _ = strconv.ParseUint(get(stockData, "Local PF"), 10, 64)
+		stock.LocalIB, _ = strconv.ParseUint(get(stockData, "Local IB"), 10, 64)
+		stock.LocalID, _ = strconv.ParseUint(get(stockData, "Local ID"), 10, 64)
+		stock.LocalMF, _ = strconv.ParseUint(get(stockData, "Local MF"), 10, 64)
+		stock.LocalSC, _ = strconv.ParseUint(get(stockData, "Local SC"), 10, 64)
+		stock.LocalFD, _ = strconv.ParseUint(get(stockData, "Local FD"), 10, 64)
+		stock.LocalOT, _ = strconv.ParseUint(get(stockData, "Local OT"), 10, 64)
+
+		stock.ForeignIS, _ = strconv.ParseUint(get(stockData, "Foreign IS"), 10, 64)
+		stock.ForeignCP, _ = strconv.ParseUint(get(stockData, "Foreign CP"), 10, 64)
+		stock.ForeignPF, _ = strconv.ParseUint(get(stockData, "Foreign PF"), 10, 64)
+		stock.ForeignIB, _ = strconv.ParseUint(get(stockData, "Foreign IB"), 10, 64)
+		stock.ForeignID, _ = strconv.ParseUint(get(stockData, "Foreign ID"), 10, 64)
+		stock.ForeignMF, _ = strconv.ParseUint(get(stockData, "Foreign MF"), 10, 64)
+		stock.ForeignSC, _ = strconv.ParseUint(get(stockData, "Foreign SC"), 10, 64)
+		stock.ForeignFD, _ = strconv.ParseUint(get(stockData, "Foreign FD"), 10, 64)
+		stock.ForeignOT, _ = strconv.ParseUint(get(stockData, "Foreign OT"), 10, 64)
 
 		listStock = append(listStock, stock)
 	}

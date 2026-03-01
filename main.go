@@ -2,10 +2,10 @@ package main
 
 import (
 	"backend/config"
+	"backend/model/entity"
 	"backend/route"
 	"log"
 	"os"
-	// _ "net/http/pprof"
 )
 
 func main() {
@@ -22,22 +22,16 @@ func main() {
 	config.MakeFolder("Resource")
 
 	// AutoMigrate database tables (commented out for production)
-	// if err := db.AutoMigrate(
-	// 	&entity.StockIPO{},
-	// 	&entity.Broker{},
-	// 	&entity.IPO_Detail{},
-	// 	&entity.Stock{},
-	// 	&entity.Category{},
-	// 	&entity.Link{},
-	// ); err != nil {
-	// 	log.Fatalf("migration failed: %v", err)
-	// }
-
-	// Commented out pprof for production
-	// go func() {
-	// 	log.Println("pprof listening on :6060")
-	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
-	// }()
+	if err := db.AutoMigrate(
+		&entity.StockIPO{},
+		&entity.Broker{},
+		&entity.IPO_Detail{},
+		&entity.Stock{},
+		&entity.Category{},
+		&entity.Link{},
+	); err != nil {
+		log.Fatalf("migration failed: %v", err)
+	}
 
 	router := route.SetupRouter(db)
 
