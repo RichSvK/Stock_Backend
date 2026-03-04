@@ -6,7 +6,6 @@ import (
 	query_model "backend/model/query"
 	"context"
 	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -14,8 +13,8 @@ import (
 type BalanceRepository interface {
 	Create(ctx context.Context, stock []entity.Stock) error
 	GetBalanceStock(ctx context.Context, code string) ([]entity.Stock, error)
-	GetScriptlessChange(ctx context.Context, startDate time.Time, endDate time.Time) ([]entity.Stock, error)
-	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int, startDate string, endDate string) ([]query_model.BalanceChange, error)
+	GetScriptlessChange(ctx context.Context, dateRange query_model.DateRangeQuery) ([]entity.Stock, error)
+	GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int, dateRange query_model.DateRangeQuery) ([]query_model.BalanceChange, error)
 }
 
 type BalanceRepositoryImpl struct {
@@ -75,19 +74,15 @@ func (repository *BalanceRepositoryImpl) GetBalanceStock(ctx context.Context, co
 	return listStock, err
 }
 
-func (repository *BalanceRepositoryImpl) GetScriptlessChange(ctx context.Context, startDate time.Time, endDate time.Time) ([]entity.Stock, error) {
+func (repository *BalanceRepositoryImpl) GetScriptlessChange(ctx context.Context, dateRange query_model.DateRangeQuery) ([]entity.Stock, error) {
 	db := repository.DB
 
 	var listStock []entity.Stock
-	startMonth := int(startDate.Month())
-	startYear := startDate.Year()
-	endMonth := int(endDate.Month())
-	endYear := endDate.Year()
 
 	err := db.WithContext(ctx).
 		Model(&entity.Stock{}).
 		Select("stock.*").
-		Where("(MONTH(date) = ? AND YEAR(date) = ?) OR (MONTH(date) = ? AND YEAR(date) = ?)", startMonth, startYear, endMonth, endYear).
+		Where("(date >= ? AND date < ?) OR (date >= ? AND date < ?)", dateRange.StartTime, dateRange.StartTimeLast, dateRange.EndTime, dateRange.EndTimeLast).
 		Order("code ASC").
 		Order("Date ASC").
 		Scan(&listStock).
@@ -110,11 +105,10 @@ func quoteIdent(col string) string {
 	return "`" + col + "`"
 }
 
-func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int, startDate string, endDate string) ([]query_model.BalanceChange, error) {
+func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int, dateRange query_model.DateRangeQuery) ([]query_model.BalanceChange, error) {
 	db := repository.DB
 
 	quotedCol := quoteIdent(shareholderType)
-	prevCol := "prev_" + shareholderType
 
 	const pageSize = 11
 	offset := (page - 1) * (pageSize - 1)
@@ -122,37 +116,37 @@ func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Contex
 	var changeExpr string
 	var whereCond string
 	if change == "Decrease" {
-		changeExpr = fmt.Sprintf(`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[2]s - t.%[1]s) / t.%[2]s * 100) END`, quotedCol, prevCol)
-		whereCond = fmt.Sprintf("t.%s < t.%s", quotedCol, prevCol)
+		changeExpr = fmt.Sprintf(`CASE WHEN s2.%[1]s = 0 THEN NULL ELSE ((s2.%[1]s - s.%[1]s) / IFNULL(s2.%[1]s, 1) * 100) END`, quotedCol)
+		whereCond = fmt.Sprintf("s.%[1]s < s2.%[1]s", quotedCol)
 	} else {
-		changeExpr = fmt.Sprintf(`CASE WHEN t.%[2]s = 0 THEN NULL ELSE ((t.%[1]s - t.%[2]s) / t.%[2]s * 100) END`, quotedCol, prevCol)
-		whereCond = fmt.Sprintf("t.%s > t.%s", quotedCol, prevCol)
+		changeExpr = fmt.Sprintf(`CASE WHEN s2.%[1]s = 0 THEN NULL ELSE ((s.%[1]s - s2.%[1]s) / IFNULL(s2.%[1]s, 1) * 100) END`, quotedCol)
+		whereCond = fmt.Sprintf("s.%[1]s > s2.%[1]s", quotedCol)
 	}
 
 	query := fmt.Sprintf(`
-		SELECT
-			t.code AS stock_code,
-			t.%[1]s AS current_ownership,
-			t.%[2]s AS previous_ownership,
-			%[3]s AS change_percentage
-		FROM (
-			SELECT
-				s.*,
-				LAG(s.%[1]s) OVER (PARTITION BY s.code ORDER BY s.date) AS %[2]s
-			FROM stock s
-			WHERE DATE_FORMAT(s.date, '%%Y-%%m') IN (?, ?)
-		) t
-		WHERE t.%[2]s IS NOT NULL AND %[4]s
-		ORDER BY change_percentage DESC, t.code
-		LIMIT ? OFFSET ?;`, quotedCol, prevCol, changeExpr, whereCond)
+	SELECT
+		s.code AS stock_code,
+		s.%[1]s AS current_ownership,
+		s2.%[1]s AS previous_ownership,
+		%[2]s AS change_percentage
+	FROM Stock s
+	JOIN Stock s2 
+		ON s.code = s2.code 
+		AND s2.date >= ? AND s2.date < ? 
+		AND s.date >= ? AND s.date < ?
+	WHERE s2.%[1]s IS NOT NULL AND %[3]s
+	ORDER BY change_percentage DESC, s.code
+	LIMIT ? OFFSET ?;
+`, quotedCol, changeExpr, whereCond)
 
 	var listStock []query_model.BalanceChange
 	err := db.WithContext(ctx).
-		Raw(query, startDate, endDate, pageSize, offset).
+		Raw(query, dateRange.StartTime, dateRange.StartTimeLast, dateRange.EndTime, dateRange.EndTimeLast, pageSize, offset).
 		Scan(&listStock).
 		Error
 
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, domain_error.ErrInternalServer
 	}
 	return listStock, nil

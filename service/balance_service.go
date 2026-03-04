@@ -4,6 +4,7 @@ import (
 	"backend/helper"
 	"backend/model/entity"
 	domain_error "backend/model/error"
+	query_model "backend/model/query"
 	"backend/model/web/response"
 	"backend/repository"
 	"bufio"
@@ -191,7 +192,16 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 		return nil, domain_error.ErrInvalidDateRange
 	}
 
-	listStock, err := service.BalanceRepository.GetScriptlessChange(ctx, startTime, endTime)
+	startTime = time.Date(startTime.Year(), startTime.Month(), 1, 0, 0, 0, 0, startTime.Location())
+	endTime = time.Date(endTime.Year(), endTime.Month(), 1, 0, 0, 0, 0, endTime.Location()).AddDate(0, 1, 0)
+
+	dateRange := query_model.DateRangeQuery{
+		StartTime:     startTime.Format("2006-01-02"),
+		StartTimeLast: startTime.AddDate(0, 1, 0).Format("2006-01-02"),
+		EndTime:       endTime.Format("2006-01-02"),
+		EndTimeLast:   endTime.AddDate(0, 1, 0).Format("2006-01-02"),
+	}
+	listStock, err := service.BalanceRepository.GetScriptlessChange(ctx, dateRange)
 	if err != nil {
 		return nil, err
 	}
@@ -293,10 +303,16 @@ func (service *BalanceServiceImpl) GetBalanceChangeData(ctx context.Context, sha
 		now.Location(),
 	)
 
-	prevYM := base.AddDate(0, -1, 0).Format("2006-01")
-	prev2YM := base.AddDate(0, -2, 0).Format("2006-01")
+	prevYM := base.AddDate(0, -1, 0)
+	prev2YM := base.AddDate(0, -2, 0)
+	dateRangeQuery := query_model.DateRangeQuery{
+		StartTime:     prev2YM.Format("2006-01-02"),
+		StartTimeLast: prev2YM.AddDate(0, 1, 0).Format("2006-01-02"),
+		EndTime:       prevYM.Format("2006-01-02"),
+		EndTimeLast:   prevYM.AddDate(0, 1, 0).Format("2006-01-02"),
+	}
 
-	listBalanceChange, err := service.BalanceRepository.GetBalanceChangeData(ctx, shareholderType, change, page, prev2YM, prevYM)
+	listBalanceChange, err := service.BalanceRepository.GetBalanceChangeData(ctx, shareholderType, change, page, dateRangeQuery)
 
 	if err != nil {
 		return nil, err

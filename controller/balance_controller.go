@@ -172,7 +172,7 @@ func (controller *BalanceControllerImpl) GetBalanceChange(c *gin.Context) {
 		})
 		return
 	}
-
+	
 	response, err := controller.BalanceService.GetBalanceChangeData(ctx, query.Type, query.Change, query.Page)
 	if err != nil {
 		c.JSON(MapBalanceErrorToCode(err), output.FailResponse{
