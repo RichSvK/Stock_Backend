@@ -15,5 +15,5 @@ func BrokerRoute(router *gin.Engine, db *gorm.DB, validate *validator.Validate) 
 	brokerService := service.NewBrokerService(brokerRepository)
 	brokerController := controller.NewBrokerController(brokerService, validate)
 
-	router.GET("/brokers", brokerController.GetBrokers)
+	router.GET("/api/v1/brokers", brokerController.GetBrokers)
 }

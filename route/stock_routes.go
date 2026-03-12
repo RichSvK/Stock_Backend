@@ -15,5 +15,5 @@ func StockRoute(router *gin.Engine, db *gorm.DB, validate *validator.Validate) {
 	stockService := service.NewStockService(stockRepository)
 	stockController := controller.NewStockController(stockService, validate)
 
-	router.GET("/stock", stockController.SearchStock)
+	router.GET("/api/v1/stocks", stockController.SearchStock)
 }

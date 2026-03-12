@@ -54,8 +54,8 @@ func InitializeDBConnection() *gorm.DB {
 		return nil
 	}
 
-	SqlDB.SetMaxIdleConns(5)
-	SqlDB.SetMaxOpenConns(10)
+	SqlDB.SetMaxIdleConns(28)
+	SqlDB.SetMaxOpenConns(60)
 	SqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	SqlDB.SetConnMaxLifetime(20 * time.Minute)
 	log.Println("Database connection established successfully")

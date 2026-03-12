@@ -18,8 +18,8 @@ func main() {
 		_ = sqlDB.Close()
 	}()
 
-	// Create Resource folder if not exists
-	config.MakeFolder("Resource")
+	// Create resource folder if not exists
+	config.MakeFolder("resource")
 
 	// AutoMigrate database tables (commented out for production)
 	if err := db.AutoMigrate(

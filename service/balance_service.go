@@ -39,7 +39,7 @@ func NewBalanceService(repositoryBalance repository.BalanceRepository) BalanceSe
 }
 
 func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) (*response.UploadBalanceResponse, error) {
-	var path = filepath.Join("Resource", fileName)
+	var path = filepath.Join("resource", fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0444)
 	if err != nil {
 		return nil, domain_error.ErrInternalServer
@@ -193,7 +193,7 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 	}
 
 	startTime = time.Date(startTime.Year(), startTime.Month(), 1, 0, 0, 0, 0, startTime.Location())
-	endTime = time.Date(endTime.Year(), endTime.Month(), 1, 0, 0, 0, 0, endTime.Location()).AddDate(0, 1, 0)
+	endTime = time.Date(endTime.Year(), endTime.Month(), 1, 0, 0, 0, 0, endTime.Location())
 
 	dateRange := query_model.DateRangeQuery{
 		StartTime:     startTime.Format("2006-01-02"),

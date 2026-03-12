@@ -129,8 +129,8 @@ func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Contex
 		s.%[1]s AS current_ownership,
 		s2.%[1]s AS previous_ownership,
 		%[2]s AS change_percentage
-	FROM Stock s
-	JOIN Stock s2 
+	FROM stock s
+	JOIN stock s2 
 		ON s.code = s2.code 
 		AND s2.date >= ? AND s2.date < ? 
 		AND s.date >= ? AND s.date < ?

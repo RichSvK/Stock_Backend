@@ -20,7 +20,7 @@ func RemoveFile(filePath string) error {
 
 // Function to create a CSV file from the list of stocks
 func MakeCSV(code string, listStock []entity.Stock) error {
-	file, err := os.Create("./Resource/" + code + ".csv")
+	file, err := os.Create("./resource/" + code + ".csv")
 	if err != nil {
 		return err
 	}

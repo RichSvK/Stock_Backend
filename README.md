@@ -13,7 +13,7 @@ Stock backend is a backend systems for stock ownership service and IPO stock ser
 
 ## Related Repositories
 - **StockWeb Frontend**: https://github.com/RichSvK/StockWeb
-- **iOS Application**: https://github.com/RichSvK/StockBalance
+- **iOS Application**: https://github.com/RichSvK/Stockbalances
 - **API Gateway**: https://github.com/RichSvK/API_Gateway
 - **User and Watchlist services**: https://github.com/RichSvK/User_Backend
 - **GoIPO**: https://github.com/RichSvK/GoIPO
@@ -26,21 +26,21 @@ Software used in developing this program:
 
 ## API Endpoints
 ### Website Link
-- `GET /links` - Retrieve list of capital market-related websites link
+- `GET /api/v1/links` - Retrieve list of capital market-related websites link
 
 ### Search Stock
-- `GET /stock` - Search stock with the given prefix text
+- `GET /api/v1/stock` - Search stock with the given prefix text
 
 ## IPO Stock
-- `GET /ipo` - Get IPO Stocks data
-- `POST /ipo/condition` - Get IPO Stocks based on dynamic filter
+- `GET /api/v1/ipo` - Get IPO Stocks data
+- `POST /api/v1/ipo/condition` - Get IPO Stocks based on dynamic filter
 
 ## Broker
-- `GET /brokers` - Get list of broker
+- `GET /api/v1/brokers` - Get list of broker
 
 ## Stock Ownership
-- `GET /balance/:code` - Get the stock ownership data
-- `GET /balance/export` - Export stock ownership of the selected stock
-- `POST /balance/upload` - Insert stock ownership KSEI data to the database
-- `GET /api/auth/balance/scriptless` - Get a list of stocks with scriptless share changes over the past month
-- `GET /api/auth/balance/change` - Get a list of stocks with ownership changes by shareholder type over the past month
+- `GET /api/v1/balances/:code` - Get the stock ownership data
+- `GET /api/v1/balances/export` - Export stock ownership of the selected stock
+- `POST /api/v1/balances/upload` - Insert stock ownership KSEI data to the database
+- `GET /api/v1/auth/balances/scriptless` - Get a list of stocks with scriptless share changes over the past month
+- `GET /api/auth/balances/change` - Get a list of stocks with ownership changes by shareholder type over the past month

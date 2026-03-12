@@ -10,17 +10,17 @@ type StockRepository interface {
 	SearchStock(ctx context.Context, stockCode string) ([]string, error)
 }
 
-type SearchStockImpl struct {
+type StockRepositoryImpl struct {
 	DB *gorm.DB
 }
 
 func NewStockRepository(db *gorm.DB) StockRepository {
-	return &SearchStockImpl{
+	return &StockRepositoryImpl{
 		DB: db,
 	}
 }
 
-func (repository *SearchStockImpl) SearchStock(ctx context.Context, stockCode string) ([]string, error) {
+func (repository *StockRepositoryImpl) SearchStock(ctx context.Context, stockCode string) ([]string, error) {
 	db := repository.DB
 
 	var listStock []string = nil

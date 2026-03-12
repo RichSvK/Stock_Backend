@@ -51,7 +51,7 @@ func (controller *BalanceControllerImpl) Upload(c *gin.Context) {
 		return
 	}
 
-	filePath := filepath.Join("Resource", file.Filename)
+	filePath := filepath.Join("resource", file.Filename)
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		c.JSON(MapBalanceErrorToCode(domain_error.ErrSaveFile), output.FailResponse{
 			Message: domain_error.ErrSaveFile.Error(),
@@ -90,7 +90,7 @@ func (controller *BalanceControllerImpl) ExportBalanceController(c *gin.Context)
 
 	c.Header("Content-Type", "text/csv")
 	c.Header("Content-Disposition", "attachment; filename=\""+stockCode+".csv\"")
-	filePath := "./Resource/" + stockCode + ".csv"
+	filePath := "./resource/" + stockCode + ".csv"
 	c.File(filePath)
 
 	if err := helper.RemoveFile(filePath); err != nil {

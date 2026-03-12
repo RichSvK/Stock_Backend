@@ -12,7 +12,7 @@ func ValidationError(err error) string {
 
 	if errors.As(err, &ve) {
 		fe := ve[0]
-		field := fe.Field() // already json tag name
+		field := fe.Field()
 
 		switch fe.Tag() {
 		case "required":
