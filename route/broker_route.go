@@ -1,9 +1,9 @@
 package route
 
 import (
-	"backend/controller"
-	"backend/repository"
-	"backend/service"
+	"backend/internal/controller"
+	"backend/internal/repository"
+	"backend/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"

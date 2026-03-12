@@ -29,7 +29,7 @@ Software used in developing this program:
 - `GET /api/v1/links` - Retrieve list of capital market-related websites link
 
 ### Search Stock
-- `GET /api/v1/stock` - Search stock with the given prefix text
+- `GET /api/v1/stocks` - Search stock with the given prefix text
 
 ## IPO Stock
 - `GET /api/v1/ipo` - Get IPO Stocks data
