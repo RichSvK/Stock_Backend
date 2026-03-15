@@ -3,11 +3,11 @@ package controller
 import (
 	"backend/internal/helper"
 	"backend/internal/model/domainerr"
+	"backend/internal/model/query_filter"
 	"backend/internal/model/request"
 	"backend/internal/model/response"
 	"backend/internal/service"
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -19,7 +19,7 @@ import (
 
 type BalanceController interface {
 	Upload(c *gin.Context)
-	ExportBalanceController(c *gin.Context)
+	ExportBalanceData(c *gin.Context)
 	GetBalanceChart(c *gin.Context)
 	GetScriptlessChange(c *gin.Context)
 	GetBalanceChange(c *gin.Context)
@@ -76,7 +76,7 @@ func (controller *BalanceControllerImpl) Upload(c *gin.Context) {
 	c.JSON(http.StatusCreated, result)
 }
 
-func (controller *BalanceControllerImpl) ExportBalanceController(c *gin.Context) {
+func (controller *BalanceControllerImpl) ExportBalanceData(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
@@ -117,28 +117,27 @@ func (controller *BalanceControllerImpl) GetScriptlessChange(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 	defer cancel()
 
-	startTime := c.Query("start_time")
-	endTime := c.Query("end_time")
-
-	if startTime == "" || endTime == "" {
+	var query query_filter.ScriptlessChangeQuery
+	_ = c.ShouldBindQuery(&query)
+	if err := controller.Validator.Struct(query); err != nil {
 		c.JSON(http.StatusBadRequest, response.FailedResponse{
-			Message: "Missing required parameters: start_time and end_time are required",
+			Message: helper.ValidationError(err),
 		})
 		return
 	}
 
-	start, err := time.Parse("2006-01-02", startTime)
+	start, err := time.Parse("2006-01-02", query.StartTime)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.FailedResponse{
-			Message: fmt.Sprintf("Invalid start_time format '%s': expected YYYY-MM-DD", startTime),
+			Message: "Invalid start_time format expected YYYY-MM-DD",
 		})
 		return
 	}
 
-	end, err := time.Parse("2006-01-02", endTime)
+	end, err := time.Parse("2006-01-02", query.EndTime)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.FailedResponse{
-			Message: fmt.Sprintf("Invalid end_time format '%s': expected YYYY-MM-DD", startTime),
+			Message: "Invalid end_time format expected YYYY-MM-DD",
 		})
 		return
 	}
@@ -159,15 +158,9 @@ func (controller *BalanceControllerImpl) GetBalanceChange(c *gin.Context) {
 	defer cancel()
 
 	var query request.GetBalanceChangeQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, response.FailedResponse{
-			Message: "Invalid bad request",
-		})
-		return
-	}
-
+	_ = c.ShouldBindQuery(&query)
 	if err := controller.Validator.Struct(query); err != nil {
-		c.JSON(MapBalanceErrorToCode(domainerr.ErrPaginationInvalid), response.FailedResponse{
+		c.JSON(http.StatusBadRequest, response.FailedResponse{
 			Message: helper.ValidationError(err),
 		})
 		return
@@ -189,8 +182,10 @@ func MapBalanceErrorToCode(err error) int {
 	switch err {
 	case domainerr.ErrBalanceNotFound:
 		return http.StatusNotFound
-	case domainerr.ErrPaginationInvalid, domainerr.ErrInvalidShareholderType:
+	case domainerr.ErrInvalidShareholderType, domainerr.ErrInvalidDateRange:
 		return http.StatusBadRequest
+	case domainerr.ErrDuplicateBalanceData:
+		return http.StatusConflict
 	default:
 		return http.StatusInternalServerError
 	}

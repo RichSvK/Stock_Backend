@@ -45,10 +45,10 @@ type StockIPO struct {
 	SubscribedStock   uint64 `gorm:"type:BIGINT UNSIGNED;not null"`
 
 	// Relationship
-	Detail []IPO_Detail `gorm:"foreignKey:stock_code;references:stock_code"`
+	Detail []IpoDetail `gorm:"foreignKey:stock_code;references:stock_code"`
 }
 
-type IPO_Detail struct {
+type IpoDetail struct {
 	StockCode string `gorm:"type:char(4);primaryKey"`
 	UW_Code   string `gorm:"type:char(2);primaryKey"`
 	UwShares  uint64 `gorm:"type:BIGINT UNSIGNED"`
@@ -64,6 +64,6 @@ func (stock *StockIPO) TableName() string {
 }
 
 // Make table name from default "ipo_details" to "ipo_detail"
-func (broker *IPO_Detail) TableName() string {
+func (broker *IpoDetail) TableName() string {
 	return "ipo_detail"
 }

@@ -17,7 +17,7 @@ func IpoRoute(router *gin.Engine, db *gorm.DB, validate *validator.Validate) {
 
 	ipoGroup := router.Group("/api/v1/ipo")
 	// Get all IPO data
-	ipoGroup.GET("", ipoController.GetAllIpo)
+	ipoGroup.GET("", ipoController.GetIpo)
 
 	// Get IPO by dynamic conditions
 	ipoGroup.POST("/condition", ipoController.GetIpoByCondition)

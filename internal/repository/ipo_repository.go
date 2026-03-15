@@ -2,6 +2,8 @@ package repository
 
 import (
 	"backend/internal/entity"
+	"backend/internal/model/domainerr"
+	"backend/internal/model/query_filter"
 	"backend/internal/model/request"
 	"context"
 	"fmt"
@@ -11,7 +13,7 @@ import (
 )
 
 type IpoRepository interface {
-	GetAllIpo(ctx context.Context) ([]entity.Ipo, error)
+	GetIpo(ctx context.Context, query query_filter.GetIpoQuery) ([]entity.Ipo, error)
 	FindByCondition(ctx context.Context, request []request.Filter) ([]entity.Ipo, error)
 }
 
@@ -25,26 +27,35 @@ func NewIpoRepository(db *gorm.DB) IpoRepository {
 	}
 }
 
-func (repository *IpoRepositoryImpl) GetAllIpo(ctx context.Context) ([]entity.Ipo, error) {
-	var listStock []entity.Ipo = nil
+func (repository *IpoRepositoryImpl) GetIpo(ctx context.Context, query query_filter.GetIpoQuery) ([]entity.Ipo, error) {
+	var listStock []entity.Ipo
 	var err error
-	db := repository.DB
-	query := "id.stock_code AS stock_code, price, ipo_shares, listed_shares, equity, warrant, nominal, mcb, is_affiliated, is_acceleration, is_new, lock_up, subscribed_stock, GROUP_CONCAT(uw_code) AS all_underwriter, GROUP_CONCAT(uw_shares) AS all_shares, (price * ipo_shares) AS amount"
+	column := "id.stock_code AS stock_code, price, ipo_shares, listed_shares, equity, warrant, nominal, mcb, is_affiliated, is_acceleration, is_new, lock_up, subscribed_stock, GROUP_CONCAT(uw_code) AS all_underwriter, GROUP_CONCAT(uw_shares) AS all_shares, (price * ipo_shares) AS amount"
+	fmt.Println("Querying IPO with code:", query.Code)
+
+	db := repository.DB.WithContext(ctx)
+	if query.Code != "" {
+		db = db.Where("id.stock_code = ?", query.Code)
+	}
+
 	err = db.Table("ipo_detail id").
-		WithContext(ctx).
-		Select(query).
+		Select(column).
 		Joins("JOIN stock_ipo s ON id.stock_code = s.stock_code").
 		Group("id.stock_code").
 		Scan(&listStock).
 		Error
-	return listStock, err
+
+	if err != nil {
+		return nil, domainerr.ErrInternalServer
+	}
+
+	return listStock, nil
 }
 
 func (repository *IpoRepositoryImpl) FindByCondition(ctx context.Context, request []request.Filter) ([]entity.Ipo, error) {
-	var listStock []entity.Ipo = nil
-	db := repository.DB
+	var listStock []entity.Ipo
+	db_query := repository.DB.WithContext(ctx)
 
-	db_query := db.Table("ipo_detail id")
 	for _, filter := range request {
 		condition := fmt.Sprintf("%s %s ?", filter.FilterName, filter.Symbol)
 		if filter.FilterType == "number" {
@@ -57,12 +68,16 @@ func (repository *IpoRepositoryImpl) FindByCondition(ctx context.Context, reques
 
 	query := "id.stock_code AS stock_code, price, ipo_shares, listed_shares, equity, warrant, nominal, mcb, is_affiliated, is_acceleration, is_new, lock_up, subscribed_stock, GROUP_CONCAT(uw_code) AS all_underwriter, GROUP_CONCAT(uw_shares) AS all_shares, (price * ipo_shares) AS amount"
 	err := db_query.
-		WithContext(ctx).
+		Table("ipo_detail id").
 		Select(query).
 		Joins("JOIN stock_ipo s ON id.stock_code = s.stock_code").
 		Group("id.stock_code").
 		Scan(&listStock).
 		Error
 
-	return listStock, err
+	if err != nil {
+		return nil, domainerr.ErrInternalServer
+	}
+
+	return listStock, nil
 }

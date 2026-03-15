@@ -32,7 +32,7 @@ func (service *StockServiceImpl) SearchStock(ctx context.Context, code string) (
 	}
 
 	response := &response.SearchStockResponse{
-		Message: "Stock found",
+		Message: "Stocks found",
 		Data:    listStock,
 	}
 

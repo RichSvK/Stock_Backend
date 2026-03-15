@@ -2,13 +2,14 @@ package repository
 
 import (
 	"backend/internal/entity"
+	"backend/internal/model/query_filter"
 	"context"
 
 	"gorm.io/gorm"
 )
 
 type BrokerRepository interface {
-	GetBrokers(ctx context.Context) ([]entity.Broker, error)
+	GetBrokers(ctx context.Context, query query_filter.BrokerQuery) ([]entity.Broker, error)
 }
 
 type BrokerRepositoryImpl struct {
@@ -21,14 +22,14 @@ func NewBrokerRepository(db *gorm.DB) BrokerRepository {
 	}
 }
 
-func (repository *BrokerRepositoryImpl) GetBrokers(ctx context.Context) ([]entity.Broker, error) {
+func (repository *BrokerRepositoryImpl) GetBrokers(ctx context.Context, query query_filter.BrokerQuery) ([]entity.Broker, error) {
 	var listBroker []entity.Broker = nil
-	db := repository.DB
+	db := repository.DB.WithContext(ctx)
 
-	err := db.Model(&entity.Broker{}).
-		WithContext(ctx).
-		Scan(&listBroker).
-		Error
+	if query.Code != "" {
+		db = db.Where("broker_code = ?", query.Code)
+	}
 
+	err := db.Find(&listBroker).Error
 	return listBroker, err
 }

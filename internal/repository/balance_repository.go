@@ -29,8 +29,12 @@ func NewBalanceRepository(db *gorm.DB) BalanceRepository {
 }
 
 func (repository *BalanceRepositoryImpl) Create(ctx context.Context, stock []entity.Stock) error {
-	db := repository.DB
-	tx := db.WithContext(ctx).Begin()
+	db := repository.DB.WithContext(ctx)
+	tx := db.Begin()
+
+	if tx.Error != nil {
+		return domainerr.ErrBalanceCreationFailed
+	}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -40,11 +44,15 @@ func (repository *BalanceRepositoryImpl) Create(ctx context.Context, stock []ent
 
 	if err := tx.Create(&stock).Error; err != nil {
 		tx.Rollback()
+
+		if domainerr.IsDuplicateError(err) {
+			return domainerr.ErrDuplicateBalanceData
+		}
+
 		return domainerr.ErrBalanceCreationFailed
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
 		return domainerr.ErrBalanceCreationFailed
 	}
 
@@ -52,49 +60,34 @@ func (repository *BalanceRepositoryImpl) Create(ctx context.Context, stock []ent
 }
 
 func (repository *BalanceRepositoryImpl) GetBalanceStock(ctx context.Context, code string) ([]entity.Stock, error) {
-	db := repository.DB
+	var listStock []entity.Stock
 
-	var listStock []entity.Stock = nil
-	err := db.WithContext(ctx).
-		Model(&entity.Stock{}).
-		Select("stock.*").
+	err := repository.DB.WithContext(ctx).
 		Where("code = ?", code).
 		Order("Date DESC").
 		Limit(6).
-		Scan(&listStock).
+		Find(&listStock).
 		Error
 
 	if err != nil {
 		return nil, domainerr.ErrInternalServer
 	}
 
-	if len(listStock) == 0 {
-		return nil, domainerr.ErrBalanceNotFound
-	}
-
-	return listStock, err
+	return listStock, nil
 }
 
 func (repository *BalanceRepositoryImpl) GetScriptlessChange(ctx context.Context, dateRange query_filter.DateRangeQuery) ([]entity.Stock, error) {
-	db := repository.DB
-
 	var listStock []entity.Stock
 
-	err := db.WithContext(ctx).
-		Model(&entity.Stock{}).
-		Select("stock.*").
+	err := repository.DB.WithContext(ctx).
 		Where("(date >= ? AND date < ?) OR (date >= ? AND date < ?)", dateRange.StartTime, dateRange.StartTimeLast, dateRange.EndTime, dateRange.EndTimeLast).
 		Order("code ASC").
 		Order("Date ASC").
-		Scan(&listStock).
+		Find(&listStock).
 		Error
 
 	if err != nil {
 		return nil, domainerr.ErrInternalServer
-	}
-
-	if len(listStock) == 0 {
-		return nil, domainerr.ErrBalanceNotFound
 	}
 
 	return listStock, err
@@ -107,7 +100,7 @@ func quoteIdent(col string) string {
 }
 
 func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int, dateRange query_filter.DateRangeQuery) ([]projection.BalanceChange, error) {
-	db := repository.DB
+	db := repository.DB.WithContext(ctx)
 
 	quotedCol := quoteIdent(shareholderType)
 
@@ -141,8 +134,7 @@ func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Contex
 `, quotedCol, changeExpr, whereCond)
 
 	var listStock []projection.BalanceChange
-	err := db.WithContext(ctx).
-		Raw(query, dateRange.StartTime, dateRange.StartTimeLast, dateRange.EndTime, dateRange.EndTimeLast, pageSize, offset).
+	err := db.Raw(query, dateRange.StartTime, dateRange.StartTimeLast, dateRange.EndTime, dateRange.EndTimeLast, pageSize, offset).
 		Scan(&listStock).
 		Error
 

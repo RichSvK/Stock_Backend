@@ -38,6 +38,7 @@ func (controller *StockWebControllerImpl) GetLinks(c *gin.Context) {
 		c.JSON(MapWebListErrorToCode(err), response.FailedResponse{
 			Message: err.Error(),
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, result)

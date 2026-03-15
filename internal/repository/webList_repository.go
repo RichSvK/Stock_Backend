@@ -22,19 +22,19 @@ func NewStockWebRepository(db *gorm.DB) StockWebRepository {
 }
 
 func (repository *StockWebRepositoryImpl) GetLinks(ctx context.Context, categoryID string) ([]entity.Link, error) {
-	db := repository.DB
+	db := repository.DB.WithContext(ctx)
 
 	// Jika categoryID diberikan, tambahkan kondisi WHERE ke query.
 	if categoryID != "" {
 		db = db.Where("category_id = ?", categoryID)
 	}
 
-	var listLink []entity.Link = nil
+	var listLink []entity.Link
 
-	err := db.WithContext(ctx).
+	err := db.
 		Model(&entity.Link{}).
 		Select("url_link, web_name, web_image, web_description").
-		Scan(&listLink).
+		Find(&listLink).
 		Error
 
 	return listLink, err

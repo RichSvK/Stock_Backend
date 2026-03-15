@@ -42,6 +42,7 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 	var path = filepath.Join("resource", fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0444)
 	if err != nil {
+		fmt.Printf("Error opening file: %v\n", err)
 		return nil, domainerr.ErrInternalServer
 	}
 
@@ -130,11 +131,11 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 
 	err = service.BalanceRepository.Create(ctx, listStock)
 	if err != nil {
-		return nil, domainerr.ErrInternalServer
+		return nil, err
 	}
 
 	response := &response.UploadBalanceResponse{
-		Message: "Data uploaded and data inserted successfully",
+		Message: "Data uploaded and inserted successfully",
 	}
 
 	return response, err
@@ -178,17 +179,9 @@ func (service *BalanceServiceImpl) GetBalanceData(ctx context.Context, code stri
 }
 
 func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, startTime time.Time, endTime time.Time) (*response.GetScriptlessChangeResponse, error) {
-	if startTime.After(endTime) {
-		return nil, domainerr.ErrInvalidDateRange
-	}
-
-	if endTime.Before(startTime.AddDate(0, 1, 0)) {
-		return nil, domainerr.ErrInvalidDateRange
-	}
-
-	// Check if dates are not in the future
+	// Check if dates are invalid
 	now := time.Now()
-	if endTime.After(now) || startTime.After(endTime) {
+	if endTime.After(now) || startTime.After(endTime) || endTime.Before(startTime.AddDate(0, 1, 0)){
 		return nil, domainerr.ErrInvalidDateRange
 	}
 
@@ -202,6 +195,7 @@ func (service *BalanceServiceImpl) GetScriptlessChange(ctx context.Context, star
 		EndTimeLast:   endTime.AddDate(0, 1, 0).Format("2006-01-02"),
 	}
 	listStock, err := service.BalanceRepository.GetScriptlessChange(ctx, dateRange)
+	
 	if err != nil {
 		return nil, err
 	}
@@ -272,10 +266,6 @@ func TotalShares(s *entity.Stock) uint64 {
 }
 
 func (service *BalanceServiceImpl) GetBalanceChangeData(ctx context.Context, shareholderType string, change string, page int) (*response.BalanceChangeResponse, error) {
-	if page < 1 {
-		return nil, domainerr.ErrPaginationInvalid
-	}
-
 	var AllowedColumns = map[string]bool{
 		"local_is": true, "local_cp": true, "local_pf": true,
 		"local_ib": true, "local_id": true, "local_mf": true,
@@ -287,10 +277,6 @@ func (service *BalanceServiceImpl) GetBalanceChangeData(ctx context.Context, sha
 
 	if !AllowedColumns[shareholderType] {
 		return nil, domainerr.ErrInvalidShareholderType
-	}
-
-	if change != "Increase" && change != "Decrease" {
-		return nil, domainerr.ErrInvalidChangeRequest
 	}
 
 	now := time.Now()

@@ -35,13 +35,7 @@ func (controller *StockControllerImpl) SearchStock(c *gin.Context) {
 	defer cancel()
 
 	var query request.SearchStockQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, response.FailedResponse{
-			Message: err.Error(),
-		})
-		return
-	}
-
+	_ = c.ShouldBindQuery(&query)
 	if err := controller.Validator.Struct(query); err != nil {
 		c.JSON(http.StatusBadRequest, response.FailedResponse{
 			Message: helper.ValidationError(err),

@@ -25,7 +25,7 @@ func main() {
 	if err := db.AutoMigrate(
 		&entity.StockIPO{},
 		&entity.Broker{},
-		&entity.IPO_Detail{},
+		&entity.IpoDetail{},
 		&entity.Stock{},
 		&entity.Category{},
 		&entity.Link{},

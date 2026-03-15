@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"backend/internal/helper"
 	"backend/internal/model/domainerr"
+	"backend/internal/model/query_filter"
 	"backend/internal/model/response"
 	"backend/internal/service"
 	"context"
@@ -32,7 +34,20 @@ func (controller *BrokerControllerImpl) GetBrokers(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 	defer cancel()
 
-	result, err := controller.BrokerService.GetBrokers(ctx)
+	var query query_filter.BrokerQuery
+	_ = c.ShouldBindQuery(&query)
+
+	// Broker code is optional. If provided then validate it
+	if query.Code != "" {
+		if err := controller.Validator.Struct(&query); err != nil {
+			c.JSON(http.StatusBadRequest, response.FailedResponse{
+				Message: helper.ValidationError(err),
+			})
+			return
+		}
+	}
+
+	result, err := controller.BrokerService.GetBrokers(ctx, query)
 	if err != nil {
 		c.JSON(MapBrokerErrorToCode(err), response.FailedResponse{
 			Message: err.Error(),

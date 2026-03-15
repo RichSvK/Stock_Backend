@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/internal/model/domainerr"
+	"backend/internal/model/query_filter"
 	"backend/internal/model/request"
 	"backend/internal/model/response"
 	"backend/internal/repository"
@@ -9,7 +10,7 @@ import (
 )
 
 type IpoService interface {
-	GetIpoAll(ctx context.Context) (*response.GetIpoResponse, error)
+	GetIpo(ctx context.Context, query query_filter.GetIpoQuery) (*response.GetIpoResponse, error)
 	GetIpoByCondition(ctx context.Context, request []request.Filter) (*response.GetIpoResponse, error)
 }
 
@@ -23,8 +24,8 @@ func NewIpoService(repositoryIPO repository.IpoRepository) IpoService {
 	}
 }
 
-func (service *IpoServiceImpl) GetIpoAll(ctx context.Context) (*response.GetIpoResponse, error) {
-	listIPO, err := service.IpoRepository.GetAllIpo(ctx)
+func (service *IpoServiceImpl) GetIpo(ctx context.Context, query query_filter.GetIpoQuery) (*response.GetIpoResponse, error) {
+	listIPO, err := service.IpoRepository.GetIpo(ctx, query)
 	if err != nil {
 		return nil, err
 	}

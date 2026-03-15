@@ -16,7 +16,7 @@ func BalanceRoute(router *gin.Engine, db *gorm.DB, validate *validator.Validate)
 	balanceController := controller.NewBalanceController(balanceService, validate)
 
 	balanceGroup := router.Group("/api/v1/balances")
-	balanceGroup.GET("/:code/export", balanceController.ExportBalanceController)
+	balanceGroup.GET("/:code/export", balanceController.ExportBalanceData)
 	balanceGroup.GET("/:code", balanceController.GetBalanceChart)
 	balanceGroup.POST("/upload", balanceController.Upload)
 

@@ -5,7 +5,6 @@ import "errors"
 var (
 	// General Errors
 	ErrInternalServer       = errors.New("internal server error")
-	ErrPaginationInvalid    = errors.New("invalid page number")
 	ErrInvalidChangeRequest = errors.New("invalid change request")
 
 	// File err

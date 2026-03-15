@@ -33,7 +33,7 @@ func InitializeDBConnection() *gorm.DB {
 		dbName,
 	)
 
-	PoolDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	poolDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		// Logger:                 logger.Default.LogMode(logger.Info), // Use for debug
 		Logger:                 logger.Default.LogMode(logger.Silent),
 		PrepareStmt:            true,
@@ -44,20 +44,20 @@ func InitializeDBConnection() *gorm.DB {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	SqlDB, err := PoolDB.DB()
+	sqlDB, err := poolDB.DB()
 	if err != nil {
 		log.Fatalf("Failed to get database instance: %v", err)
 	}
 
-	if err := SqlDB.Ping(); err != nil {
+	if err := sqlDB.Ping(); err != nil {
 		log.Fatal("Failed to connect")
 		return nil
 	}
 
-	SqlDB.SetMaxIdleConns(28)
-	SqlDB.SetMaxOpenConns(60)
-	SqlDB.SetConnMaxIdleTime(5 * time.Minute)
-	SqlDB.SetConnMaxLifetime(20 * time.Minute)
+	sqlDB.SetMaxIdleConns(28)
+	sqlDB.SetMaxOpenConns(60)
+	sqlDB.SetConnMaxIdleTime(10 * time.Minute)
+	sqlDB.SetConnMaxLifetime(60 * time.Minute)
 	log.Println("Database connection established successfully")
-	return PoolDB
+	return poolDB
 }

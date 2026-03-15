@@ -2,13 +2,14 @@ package service
 
 import (
 	"backend/internal/model/domainerr"
+	"backend/internal/model/query_filter"
 	"backend/internal/model/response"
 	"backend/internal/repository"
 	"context"
 )
 
 type BrokerService interface {
-	GetBrokers(ctx context.Context) (*response.GetBrokerResponse, error)
+	GetBrokers(ctx context.Context, query query_filter.BrokerQuery) (*response.GetBrokerResponse, error)
 }
 
 type BrokerServiceImpl struct {
@@ -21,8 +22,8 @@ func NewBrokerService(repositoryBroker repository.BrokerRepository) BrokerServic
 	}
 }
 
-func (service *BrokerServiceImpl) GetBrokers(ctx context.Context) (*response.GetBrokerResponse, error) {
-	listBroker, err := service.BrokerRepository.GetBrokers(ctx)
+func (service *BrokerServiceImpl) GetBrokers(ctx context.Context, query query_filter.BrokerQuery) (*response.GetBrokerResponse, error) {
+	listBroker, err := service.BrokerRepository.GetBrokers(ctx, query)
 	if err != nil {
 		return nil, domainerr.ErrInternalServer
 	}

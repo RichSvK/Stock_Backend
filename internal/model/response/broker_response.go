@@ -14,8 +14,8 @@ type BrokerResponse struct {
 
 func ToBrokerResponse(broker *entity.Broker) BrokerResponse {
 	return BrokerResponse{
-		Code: broker.Broker_Code,
-		Name: broker.Broker_Code + " - " + broker.Broker_Name,
+		Code: broker.BrokerCode,
+		Name: broker.BrokerCode + " - " + broker.BrokerName,
 	}
 }
 

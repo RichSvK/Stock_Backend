@@ -15,5 +15,6 @@ func StockWebRoute(router *gin.Engine, db *gorm.DB, validate *validator.Validate
 	stockWebService := service.NewStockWebService(stockWebRepository)
 	stockWebController := controller.NewStockWebController(stockWebService, validate)
 
-	router.GET("/api/v1/links", stockWebController.GetLinks)
+	linkRouting := router.Group("/api/v1/links")
+	linkRouting.GET("", stockWebController.GetLinks)
 }

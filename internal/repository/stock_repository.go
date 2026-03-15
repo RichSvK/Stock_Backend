@@ -21,10 +21,9 @@ func NewStockRepository(db *gorm.DB) StockRepository {
 }
 
 func (repository *StockRepositoryImpl) SearchStock(ctx context.Context, stockCode string) ([]string, error) {
-	db := repository.DB
+	var listStock []string
 
-	var listStock []string = nil
-	err := db.WithContext(ctx).
+	err := repository.DB.WithContext(ctx).
 		Table("stock").
 		Distinct("code").
 		Where("code LIKE ?", stockCode+"%").

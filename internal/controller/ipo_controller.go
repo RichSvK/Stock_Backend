@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"backend/internal/helper"
 	"backend/internal/model/domainerr"
+	"backend/internal/model/query_filter"
 	"backend/internal/model/request"
 	"backend/internal/model/response"
 	"backend/internal/service"
@@ -14,7 +16,7 @@ import (
 )
 
 type IpoController interface {
-	GetAllIpo(c *gin.Context)
+	GetIpo(c *gin.Context)
 	GetIpoByCondition(c *gin.Context)
 }
 
@@ -30,11 +32,22 @@ func NewIpoController(ipoService service.IpoService, validate *validator.Validat
 	}
 }
 
-func (controller *IpoControllerImpl) GetAllIpo(c *gin.Context) {
+func (controller *IpoControllerImpl) GetIpo(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 	defer cancel()
 
-	result, err := controller.IpoService.GetIpoAll(ctx)
+	var query query_filter.GetIpoQuery
+	_ = c.ShouldBindQuery(&query)
+	if query.Code != "" { 
+		if err := controller.Validator.Struct(query); err != nil {
+			c.JSON(http.StatusBadRequest, response.FailedResponse{
+				Message: helper.ValidationError(err),
+			})
+			return
+		}
+	}
+
+	result, err := controller.IpoService.GetIpo(ctx, query)
 	if err != nil {
 		c.JSON(MapIpoErrorToCode(err), response.FailedResponse{
 			Message: err.Error(),
@@ -46,15 +59,27 @@ func (controller *IpoControllerImpl) GetAllIpo(c *gin.Context) {
 }
 
 func (controller *IpoControllerImpl) GetIpoByCondition(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+	defer cancel()
+
 	var request []request.Filter = nil
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	_ = c.ShouldBindJSON(&request)
+	if len(request) == 0 {
+		c.JSON(http.StatusBadRequest, response.FailedResponse{
+			Message: domainerr.ErrEmptyRequest.Error(),
+		})
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
-	defer cancel()
+	for _, filter := range request {
+		if err := controller.Validator.Struct(filter); err != nil {
+			c.JSON(http.StatusBadRequest, response.FailedResponse{
+				Message: helper.ValidationError(err),
+			})
+			return
+		}
+	}
 
 	result, err := controller.IpoService.GetIpoByCondition(ctx, request)
 	if err != nil {
