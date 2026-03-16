@@ -27,6 +27,9 @@ Software used in developing this program:
 ## API Endpoints
 ### Website Link
 - `GET /api/v1/links` - Retrieve list of capital market-related websites link
+- `POST /api/v1/links` - Create a new website link notes
+- `PATCH /api/v1/links` - Update an existing website link
+- `DELETE /api/v1/links/:name` - Delete a website link by name
 
 ### Search Stock
 - `GET /api/v1/stocks` - Search stock with the given prefix text
@@ -36,11 +39,11 @@ Software used in developing this program:
 - `POST /api/v1/ipo/condition` - Get IPO Stocks based on dynamic filter
 
 ## Broker
-- `GET /api/v1/brokers` - Get list of broker
+- `GET /api/v1/brokers` - Get list of broker or filtered broker by condition
 
 ## Stock Ownership
 - `GET /api/v1/balances/:code` - Get the stock ownership data
 - `GET /api/v1/balances/export` - Export stock ownership of the selected stock
-- `POST /api/v1/balances/upload` - Insert stock ownership KSEI data to the database
+- `POST /api/v1/balances/import` - Insert stock ownership KSEI data to the database
 - `GET /api/v1/auth/balances/scriptless` - Get a list of stocks with scriptless share changes over the past month
-- `GET /api/auth/balances/change` - Get a list of stocks with ownership changes by shareholder type over the past month
+- `GET /api/auth/balances/changes` - Get a list of stocks with ownership changes by shareholder type over the past month

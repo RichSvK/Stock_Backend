@@ -2,9 +2,10 @@
 go test -v -coverpkg=./... -coverprofile=coverage.out ./...
 
 ## Check test coverage without main
+
 go test -v \
--coverpkg=./internal/...,./router/...,./database/...,./config/... \
--coverprofile=coverage.out ./...
+-coverpkg=./internal/...,./route/...,./config/... \
+-coverprofile=cov.out ./... 
 
 ## Check result in browser
 go tool cover -html=coverage.out

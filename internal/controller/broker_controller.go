@@ -39,7 +39,7 @@ func (controller *BrokerControllerImpl) GetBrokers(c *gin.Context) {
 
 	// Broker code is optional. If provided then validate it
 	if query.Code != "" {
-		if err := controller.Validator.Struct(&query); err != nil {
+		if err := controller.Validator.Struct(query); err != nil {
 			c.JSON(http.StatusBadRequest, response.FailedResponse{
 				Message: helper.ValidationError(err),
 			})

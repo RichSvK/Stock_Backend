@@ -40,7 +40,7 @@ func TestUploadBalance(t *testing.T) {
 		"Accept":       "application/json",
 	}
 
-	path := "/api/v1/balances/upload"
+	path := "/api/v1/balances/import"
 	res, status, err := PerformRequest[*response.UploadBalanceResponse](http.MethodPost, path, headers, body)
 
 	require.Nil(t, err)
@@ -73,7 +73,7 @@ func TestUploadBalanceDuplicate(t *testing.T) {
 		"Accept":       "application/json",
 	}
 
-	path := "/api/v1/balances/upload"
+	path := "/api/v1/balances/import"
 	res, status, err := PerformRequest[*response.FailedResponse](http.MethodPost, path, headers, body)
 
 	require.Nil(t, err)
@@ -192,7 +192,7 @@ func TestGetBalanceChange(t *testing.T) {
 		"Accept": "application/json",
 	}
 
-	path := "/api/v1/auth/balances/change?type=local_id&change=Decrease&page=1"
+	path := "/api/v1/auth/balances/changes?type=local_id&change=Decrease&page=1"
 	res, status, err := PerformRequest[*response.BalanceChangeResponse](http.MethodGet, path, headers, nil)
 	require.Nil(t, err)
 
@@ -206,7 +206,7 @@ func TestGetBalanceChangeInvalidQuery(t *testing.T) {
 		"Accept": "application/json",
 	}
 
-	path := "/api/v1/auth/balances/change?type=local_id&change=Dec&page=1"
+	path := "/api/v1/auth/balances/changes?type=local_id&change=Dec&page=1"
 	res, status, err := PerformRequest[*response.FailedResponse](http.MethodGet, path, headers, nil)
 	require.Nil(t, err)
 
@@ -219,7 +219,7 @@ func TestGetBalanceChangeInvlidType(t *testing.T) {
 		"Accept": "application/json",
 	}
 
-	path := "/api/v1/auth/balances/change?type=lokal&change=Decrease&page=1"
+	path := "/api/v1/auth/balances/changes?type=lokal&change=Decrease&page=1"
 	res, status, err := PerformRequest[*response.FailedResponse](http.MethodGet, path, headers, nil)
 	require.Nil(t, err)
 

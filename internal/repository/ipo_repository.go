@@ -31,7 +31,6 @@ func (repository *IpoRepositoryImpl) GetIpo(ctx context.Context, query query_fil
 	var listStock []entity.Ipo
 	var err error
 	column := "id.stock_code AS stock_code, price, ipo_shares, listed_shares, equity, warrant, nominal, mcb, is_affiliated, is_acceleration, is_new, lock_up, subscribed_stock, GROUP_CONCAT(uw_code) AS all_underwriter, GROUP_CONCAT(uw_shares) AS all_shares, (price * ipo_shares) AS amount"
-	fmt.Println("Querying IPO with code:", query.Code)
 
 	db := repository.DB.WithContext(ctx)
 	if query.Code != "" {

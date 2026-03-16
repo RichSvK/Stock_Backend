@@ -18,9 +18,9 @@ func BalanceRoute(router *gin.Engine, db *gorm.DB, validate *validator.Validate)
 	balanceGroup := router.Group("/api/v1/balances")
 	balanceGroup.GET("/:code/export", balanceController.ExportBalanceData)
 	balanceGroup.GET("/:code", balanceController.GetBalanceChart)
-	balanceGroup.POST("/upload", balanceController.Upload)
+	balanceGroup.POST("/import", balanceController.Upload)
 
 	protectedGroup := router.Group("/api/v1/auth/balances")
 	protectedGroup.GET("/scriptless", balanceController.GetScriptlessChange)
-	protectedGroup.GET("/change", balanceController.GetBalanceChange)
+	protectedGroup.GET("/changes", balanceController.GetBalanceChange)
 }

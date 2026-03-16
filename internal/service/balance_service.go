@@ -42,7 +42,7 @@ func (service *BalanceServiceImpl) Create(ctx context.Context, fileName string) 
 	var path = filepath.Join("resource", fileName)
 	file, err := os.OpenFile(path, os.O_RDONLY, 0444)
 	if err != nil {
-		fmt.Printf("Error opening file: %v\n", err)
+		log.Printf("Error opening file: %v\n", err)
 		return nil, domainerr.ErrInternalServer
 	}
 

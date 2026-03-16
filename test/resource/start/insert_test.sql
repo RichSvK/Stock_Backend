@@ -13,3 +13,9 @@ VALUES ('STRK','FZ',120360000)
     ,('STRK','PG',120360000)
     ,('STRK','SH',619500000);
 
+INSERT INTO category (`id`, `name`)
+VALUES
+    (1, "Tools"),
+    (2, "Macro"),
+    (3, "News"),
+    (4, "Study");

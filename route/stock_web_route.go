@@ -17,4 +17,7 @@ func StockWebRoute(router *gin.Engine, db *gorm.DB, validate *validator.Validate
 
 	linkRouting := router.Group("/api/v1/links")
 	linkRouting.GET("", stockWebController.GetLinks)
+	linkRouting.POST("", stockWebController.CreateLink)
+	linkRouting.PATCH("", stockWebController.UpdateLink)
+	linkRouting.DELETE("/:name", stockWebController.DeleteLink)
 }

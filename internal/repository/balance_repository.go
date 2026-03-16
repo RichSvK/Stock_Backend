@@ -7,6 +7,7 @@ import (
 	"backend/internal/model/query_filter"
 	"context"
 	"fmt"
+	"log"
 
 	"gorm.io/gorm"
 )
@@ -139,7 +140,7 @@ func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Contex
 		Error
 
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return nil, domainerr.ErrInternalServer
 	}
 	return listStock, nil

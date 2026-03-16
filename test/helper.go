@@ -31,7 +31,6 @@ func ClearTable(tableName string) error {
 		return fmt.Errorf("failed to clear database: %w", err)
 	}
 
-	fmt.Println("Success clear table" + tableName)
 	return nil
 }
 
@@ -129,7 +128,7 @@ func InsertTestStockData(filepath string) error {
 		"Accept":       "application/json",
 	}
 
-	path := "/api/v1/balances/upload"
+	path := "/api/v1/balances/import"
 	_, _, err = PerformRequest[*response.UploadBalanceResponse](http.MethodPost, path, headers, body)
 	if err != nil {
 		return err
