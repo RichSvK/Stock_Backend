@@ -1,6 +1,7 @@
 package test
 
 import (
+	"backend/internal/model/domainerr"
 	"backend/internal/model/request"
 	"backend/internal/model/response"
 	"fmt"
@@ -109,8 +110,8 @@ func TestUpdateLink(t *testing.T) {
 		Name:        "Test Link",
 		URL:         "https://www.test.com",
 		Description: "This is an updated test link",
-		Image: "update.png",
-		Category: 2,
+		Image:       "update.png",
+		Category:    2,
 	}
 
 	headers := map[string]string{
@@ -136,7 +137,7 @@ func TestUpdateLinkBadRequest(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, status)
-	assert.Equal(t, "invalid request body", res.Message)
+	assert.Equal(t, domainerr.ErrInvalidRequestBody.Error(), res.Message)
 }
 
 func TestUpdateLinkFieldNotExist(t *testing.T) {
@@ -176,7 +177,7 @@ func TestUpdateLinkFieldNotFound(t *testing.T) {
 	assert.Equal(t, "link not found", res.Message)
 }
 
-func TestDelete(t *testing.T) {
+func TestDeleteLink(t *testing.T) {
 	name := "Test Link"
 	headers := map[string]string{
 		"Accept": "application/json",

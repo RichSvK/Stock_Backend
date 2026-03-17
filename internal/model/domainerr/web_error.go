@@ -4,8 +4,8 @@ import "errors"
 
 var (
 	// General Errors
-	ErrInternalServer       = errors.New("internal server error")
-	ErrInvalidChangeRequest = errors.New("invalid change request")
+	ErrInternalServer     = errors.New("internal server error")
+	ErrInvalidRequestBody = errors.New("invalid request body")
 
 	// File err
 	ErrSaveFile       = errors.New("failed to save file")

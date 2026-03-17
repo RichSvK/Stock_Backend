@@ -67,9 +67,9 @@ func (repository *StockWebRepositoryImpl) CreateLink(ctx context.Context, link *
 }
 
 func (repository *StockWebRepositoryImpl) UpdateLink(ctx context.Context, name string, updates map[string]any) error {
-	db := repository.DB.WithContext(ctx)
-
-	result := db.Model(&entity.Link{}).Where("web_name = ?", name).
+	result := repository.DB.WithContext(ctx).
+		Model(&entity.Link{}).
+		Where("web_name = ?", name).
 		Updates(updates)
 
 	if result.Error != nil {
@@ -85,10 +85,11 @@ func (repository *StockWebRepositoryImpl) UpdateLink(ctx context.Context, name s
 }
 
 func (repository *StockWebRepositoryImpl) DeleteLink(ctx context.Context, name string) error {
-	db := repository.DB.WithContext(ctx)
-
-	result := db.Where("web_name = ?", name).Delete(&entity.Link{})
-	if result.Error != nil {
+	result := repository.DB.WithContext(ctx).
+		Where("web_name = ?", name).
+		Delete(&entity.Link{})
+	
+		if result.Error != nil {
 		return domainerr.ErrInternalServer
 	}
 

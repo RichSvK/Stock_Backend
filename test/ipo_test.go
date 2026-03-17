@@ -1,6 +1,7 @@
 package test
 
 import (
+	"backend/internal/model/domainerr"
 	"backend/internal/model/request"
 	"backend/internal/model/response"
 	"net/http"
@@ -65,7 +66,6 @@ func TestGetIpoByCondition(t *testing.T) {
 
 func TestGetIpoEmptyFilter(t *testing.T) {
 	header := map[string]string{
-		"Content-Type": "application/json",
 		"Accept":       "application/json",
 	}
 
@@ -74,7 +74,7 @@ func TestGetIpoEmptyFilter(t *testing.T) {
 	require.Nil(t, err)
 
 	assert.Equal(t, http.StatusBadRequest, status)
-	assert.Equal(t, "request body cannot be empty", res.Message)
+	assert.Equal(t, domainerr.ErrInvalidRequestBody.Error(), res.Message)
 }
 
 func TestGetIpoInvalidCondition(t *testing.T) {

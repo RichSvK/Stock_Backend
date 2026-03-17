@@ -126,9 +126,17 @@ func (repository *BalanceRepositoryImpl) GetBalanceChangeData(ctx context.Contex
 		%[2]s AS change_percentage
 	FROM stock s
 	JOIN stock s2 
-		ON s.code = s2.code 
-		AND s2.date >= ? AND s2.date < ? 
-		AND s.date >= ? AND s.date < ?
+		ON s.code = s2.code
+		AND s2.date = (
+			SELECT MAX(date)
+			FROM stock
+			WHERE date >= ? AND date < ?
+		)
+		AND s.date = (
+			SELECT MAX(date)
+			FROM stock
+			WHERE date >= ? AND date < ?
+		)
 	WHERE s2.%[1]s IS NOT NULL AND %[3]s
 	ORDER BY change_percentage DESC, s.code
 	LIMIT ? OFFSET ?;

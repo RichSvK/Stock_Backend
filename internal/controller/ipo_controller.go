@@ -8,6 +8,7 @@ import (
 	"backend/internal/model/response"
 	"backend/internal/service"
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -38,7 +39,7 @@ func (controller *IpoControllerImpl) GetIpo(c *gin.Context) {
 
 	var query query_filter.GetIpoQuery
 	_ = c.ShouldBindQuery(&query)
-	if query.Code != "" { 
+	if query.Code != "" {
 		if err := controller.Validator.Struct(query); err != nil {
 			c.JSON(http.StatusBadRequest, response.FailedResponse{
 				Message: helper.ValidationError(err),
@@ -64,7 +65,14 @@ func (controller *IpoControllerImpl) GetIpoByCondition(c *gin.Context) {
 
 	var request []request.Filter = nil
 
-	_ = c.ShouldBindJSON(&request)
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println(err.Error())
+		c.JSON(http.StatusBadRequest, response.FailedResponse{
+			Message: domainerr.ErrInvalidRequestBody.Error(),
+		})
+		return
+	}
+
 	if len(request) == 0 {
 		c.JSON(http.StatusBadRequest, response.FailedResponse{
 			Message: domainerr.ErrEmptyRequest.Error(),

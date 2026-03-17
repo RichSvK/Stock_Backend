@@ -89,7 +89,7 @@ func (controller *StockWebControllerImpl) UpdateLink(c *gin.Context) {
 	var request request.UpdateLinkRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, response.FailedResponse{
-			Message: "invalid request body",
+			Message: domainerr.ErrInvalidRequestBody.Error(),
 		})
 		return
 	}
